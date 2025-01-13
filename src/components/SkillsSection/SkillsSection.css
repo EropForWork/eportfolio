@@ -1,0 +1,114 @@
+.skills-section {
+  color: #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  height: 95%;
+  padding: 20px;
+}
+
+.avatar-container {
+  width: 49%;
+  height: 100%;
+  background: linear-gradient(230deg, #f0f4f8, #d9e8f4);
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.skills-container {
+  width: 49%;
+  height: 100%;
+  background: linear-gradient(120deg, #f0f4f8, #d9e8f4);
+  border-radius: 15px;
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.skills-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.soft-skill {
+  font-size: 1.2em;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+
+.skill-group {
+  margin-bottom: 15px;
+  cursor: pointer;
+}
+
+.skill-group-container {
+  background: linear-gradient(135deg, #eef7ff, #d0eaff);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+.skill-group-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(247, 145, 50, 0.445);
+}
+
+.skill-group-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0056b3;
+  pointer-events: none;
+}
+
+.skills-block {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 5px;
+  justify-content: flex-start;
+}
+
+.skill-block {
+  background: #fff;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 5px 8px;
+  display: flex;
+  align-items: center; /* Центрирование по вертикали */
+  gap: 8px;
+  font-size: 1rem;
+  color: #333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  min-height: 40px; /* Добавить минимальную высоту для блоков */
+}
+
+.skill-block:hover {
+  box-shadow: 0 2px 4px rgb(93, 233, 175);
+}
+
+.skill-icon {
+  font-size: 1.5em;
+  color: #007bff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skills-title {
+  font-size: 1.8rem;
+  color: #333;
+  margin-bottom: 15px;
+  font-weight: bold;
+  text-align: center;
+}

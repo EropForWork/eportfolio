@@ -1,0 +1,10 @@
+.main-page {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  flex-grow: 1;
+  padding: 1vw;
+  background-color: #fff;
+  font-family: Arial, sans-serif;
+}
