@@ -1,27 +1,28 @@
 .resume-buttons {
-  display: flex;
-  justify-content: center;
-  gap: 10%;
-  margin-top: 1vw;
-  height: 5%;
+	display: flex;
+	justify-content: center;
+	gap: 10%;
+	margin-top: 1vw;
+	height: 5%;
+	z-index: 2;
 }
 
 .resume-button {
-  padding: 0.5vw 1vw;
-  font-size: 1em;
-  background-color: #4caf50;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
+	padding: 0.5vw 1vw;
+	font-size: 1em;
+	background-color: #4caf50;
+	color: white;
+	border: none;
+	border-radius: 5px;
+	cursor: pointer;
+	transition: background-color 0.3s ease;
 }
 
 .resume-button a {
-  text-decoration: none;
-  color: white;
+	text-decoration: none;
+	color: white;
 }
 
 .resume-button:hover {
-  background-color: #45a049;
+	background-color: #45a049;
 }
