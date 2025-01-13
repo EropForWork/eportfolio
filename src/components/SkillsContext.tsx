@@ -4,9 +4,18 @@ import {
 	Engine,
 	Mesh,
 	Scene,
-	ShadowGenerator
+	ShadowGenerator,
+	Vector3,
+	Tools
 } from 'babylonjs';
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, {
+	useEffect,
+	createContext,
+	useState,
+	useContext,
+	ReactNode
+} from 'react';
+import { moveCamera } from '../functions/babylon/camera';
 
 interface SkillsContextType {
 	selectedSkill: string | null;
@@ -34,6 +43,24 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			models: null,
 			shadows: null
 		});
+
+	useEffect(() => {
+		if (babylonProjectStates.camera && selectedSkill !== '') {
+			switch (selectedSkill) {
+				case '0':
+					moveCamera(babylonProjectStates.camera, new Vector3(0, 0, 0), {
+						alpha: Tools.ToRadians(50),
+						beta: Tools.ToRadians(50),
+						radius: 10
+					});
+					break;
+				default:
+					break;
+			}
+
+			setSelectedSkill('');
+		}
+	}, [selectedSkill]);
 
 	return (
 		<SkillsContext.Provider

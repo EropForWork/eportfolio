@@ -19,7 +19,7 @@ import {
 
 const SkillsAvatar: React.FC = () => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const { selectedSkill, setBabylonProjectStates } = useSkillsContext();
+	const { setBabylonProjectStates } = useSkillsContext();
 
 	useEffect(() => {
 		const canvas = canvasRef.current;
@@ -131,12 +131,6 @@ const SkillsAvatar: React.FC = () => {
 
 		createBabylonProject(canvas);
 	}, [setBabylonProjectStates]);
-
-	useEffect(() => {
-		if (selectedSkill) {
-			console.log(`Selected skill: ${selectedSkill}`);
-		}
-	}, [selectedSkill]);
 
 	return <canvas ref={canvasRef} className="avatar-container" />;
 };
