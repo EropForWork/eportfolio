@@ -17,6 +17,11 @@
   transition: background-color 0.3s ease;
 }
 
+.resume-button a {
+  text-decoration: none;
+  color: white;
+}
+
 .resume-button:hover {
   background-color: #45a049;
 }
