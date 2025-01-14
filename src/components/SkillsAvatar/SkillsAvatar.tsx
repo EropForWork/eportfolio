@@ -59,14 +59,14 @@ const SkillsAvatar: React.FC = () => {
 		const createModels = async (scene: Scene): Promise<Mesh[]> => {
 			const box = MeshBuilder.CreateBox('box', {}, scene);
 			box.position.y = 1;
-			box.position.x = 2;
+			box.position.x = 0;
 
 			const ground = MeshBuilder.CreateGround(
 				'ground',
 				{ width: 6, height: 6 },
 				scene
 			);
-			ground.position.x = 2;
+			ground.position.x = 0;
 
 			box.material = new StandardMaterial('boxMaterial', scene);
 			(box.material as StandardMaterial).emissiveColor = new Color3(0.7, 0.7, 0.7);

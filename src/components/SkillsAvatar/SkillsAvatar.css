@@ -1,9 +1,9 @@
 .avatar-container {
 	position: absolute;
-	width: 100vw;
+	width: 150vw;
 	height: 100vh;
 	top: 0;
-	left: 0;
+	left: -50vw;
 	display: flex;
 	align-items: center;
 	justify-content: center;
