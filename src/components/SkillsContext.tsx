@@ -1,4 +1,5 @@
 import {
+	AbstractMesh,
 	ArcRotateCamera,
 	DirectionalLight,
 	Engine,
@@ -89,6 +90,6 @@ export interface babylonProjectStatesI {
 	scene: Scene | null;
 	camera: ArcRotateCamera | null;
 	light: DirectionalLight | null;
-	models: Mesh[] | null;
+	models: (Mesh | AbstractMesh)[] | null;
 	shadows: ShadowGenerator | null;
 }
