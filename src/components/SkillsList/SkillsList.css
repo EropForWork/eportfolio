@@ -65,6 +65,7 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: opacity 0.3s ease;
 	transition: all 0.3s ease;
 }
 
@@ -81,6 +82,7 @@
 	padding: 5px 8px;
 	display: flex;
 	align-items: center;
+	position: relative;
 	gap: 8px;
 	font-size: 1rem;
 	box-shadow: 0 2px 4px var(--shadow-color);
@@ -90,5 +92,28 @@
 
 .skill-block:hover {
 	border: 1px solid var(--button-text);
-	/* box-shadow: 0 2px 4px var(--shadow-hover-color); */
+}
+
+.skill-chart {
+	width: 25px;
+	height: 25px;
+	position: absolute;
+	opacity: 0;
+	transition:
+		opacity 0.3s ease,
+		transform 0.3s ease;
+}
+.custom-progressbar .CircularProgressbar-path {
+	stroke: var(--primary-text) !important;
+}
+
+.custom-progressbar .CircularProgressbar-trail {
+	stroke: var(--button-hover-bg) !important;
+}
+.skill-block:hover .skill-icon {
+	opacity: 0;
+}
+
+.skill-block:hover .skill-chart {
+	opacity: 1;
 }
