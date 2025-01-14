@@ -16,6 +16,7 @@ import {
 	ShadowGenerator,
 	StandardMaterial,
 	Tools,
+	TransformNode,
 	Vector3
 } from 'babylonjs';
 import { changeMeshVisibility } from '../../functions/babylon/models';
@@ -87,8 +88,6 @@ const SkillsAvatar: React.FC = () => {
 							} else if (modelName === 'logos.gltf') {
 								mainMesh.position = new Vector3(0, 2.5, 0);
 								mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-							} else if (modelName === 'html5.gltf') {
-								changeMeshVisibility(mainMesh, 1);
 							}
 							return mainMesh;
 						} catch (error) {
@@ -113,10 +112,16 @@ const SkillsAvatar: React.FC = () => {
 			ground.position.x = 0;
 
 			const groundMaterial = new StandardMaterial('groundMaterial', scene);
-			groundMaterial.emissiveColor = new Color3(0.5, 0.5, 0.5);
+			groundMaterial.emissiveColor = new Color3(0, 0, 0);
 			ground.material = groundMaterial;
 
 			modelsArray.push(ground);
+
+			const jsLogo: TransformNode | null =
+				scene.getTransformNodeByName('JAVASCRIPT_5');
+			if (jsLogo) {
+				changeMeshVisibility(jsLogo, 1);
+			}
 
 			return modelsArray;
 		};
