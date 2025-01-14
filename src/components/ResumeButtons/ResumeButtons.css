@@ -10,19 +10,19 @@
 .resume-button {
 	padding: 0.5vw 1vw;
 	font-size: 1em;
-	background-color: #4caf50;
-	color: white;
+	background-color: var(--button-bg);
 	border: none;
 	border-radius: 5px;
 	cursor: pointer;
+	color: var(--button-text);
 	transition: background-color 0.3s ease;
 }
 
 .resume-button a {
 	text-decoration: none;
-	color: white;
+	color: var(--button-text);
 }
 
 .resume-button:hover {
-	background-color: #45a049;
+	background-color: var(--button-hover-bg);
 }

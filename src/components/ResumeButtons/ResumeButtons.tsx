@@ -1,6 +1,30 @@
 import './ResumeButtons.css';
 
 const ResumeButtons = () => {
+	const currentTheme = localStorage.getItem('theme');
+	if (currentTheme) {
+		document.documentElement.setAttribute('data-theme', currentTheme);
+	}
+
+	const switchColorTheme = () => {
+		const currentTheme =
+			document.documentElement.getAttribute('data-theme') || 'default';
+		let newTheme;
+
+		if (currentTheme === 'default') {
+			newTheme = 'orange';
+		} else if (currentTheme === 'orange') {
+			newTheme = 'cyberpunk';
+		} else if (currentTheme === 'cyberpunk') {
+			newTheme = 'white-black';
+		} else {
+			newTheme = 'default';
+		}
+
+		document.documentElement.setAttribute('data-theme', newTheme);
+		localStorage.setItem('theme', newTheme);
+	};
+
 	return (
 		<div className="resume-buttons">
 			{/* <button className="resume-button">
@@ -38,6 +62,13 @@ const ResumeButtons = () => {
 				>
 					Перейти на GitHub
 				</a>
+			</button>
+			<button
+				className="resume-button"
+				id="theme-switcher"
+				onClick={switchColorTheme}
+			>
+				Сменить тему
 			</button>
 		</div>
 	);

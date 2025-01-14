@@ -1,68 +1,63 @@
 :root {
-	font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-	line-height: 1.5;
-	font-weight: 400;
+	--primary-bg: #0d1b2a;
+	--primary-text: #ffd700;
+	--accent-color1: #3cb371;
+	--accent-color2: #4682b4;
+	--secondary-bg: #2e4a62;
+	--secondary-text: #f8f8f8;
 
-	color-scheme: light dark;
-	color: rgba(255, 255, 255, 0.87);
-	background-color: #242424;
+	--button-bg: #3cb371;
+	--button-text: #ffd700;
+	--button-hover-bg: #4682b4;
 
-	font-synthesis: none;
-	text-rendering: optimizeLegibility;
-	-webkit-font-smoothing: antialiased;
-	-moz-osx-font-smoothing: grayscale;
-}
-
-a {
-	font-weight: 500;
-	color: #646cff;
-	text-decoration: inherit;
-}
-a:hover {
-	color: #535bf2;
+	--shadow-color: rgba(0, 0, 0, 0.25);
+	--border-color: #2e4a62;
 }
 
-body {
-	margin: 0;
-	display: flex;
-	place-items: center;
-	min-width: 320px;
-	min-height: 100vh;
+[data-theme='orange'] {
+	--primary-bg: #0d1b2a;
+	--primary-text: #ffd700;
+	--accent-color1: #ff6347;
+	--accent-color2: #ffa07a;
+	--secondary-bg: #293241;
+	--secondary-text: #eaeaea;
+
+	--button-bg: #ff6347;
+	--button-text: #ffd700;
+	--button-hover-bg: #ffa07a;
+
+	--shadow-color: rgba(0, 0, 0, 0.25);
+	--border-color: #293241;
 }
 
-h1 {
-	font-size: 3.2em;
-	line-height: 1.1;
+[data-theme='cyberpunk'] {
+	--primary-bg: #0d1b2a;
+	--primary-text: #ffd700;
+	--accent-color1: #8a2be2;
+	--accent-color2: #0f77ff;
+	--secondary-bg: #202040;
+	--secondary-text: #dcdcdc;
+
+	--button-bg: #8a2be2;
+	--button-text: #ffd700;
+	--button-hover-bg: #0f77ff;
+
+	--shadow-color: rgba(0, 0, 0, 0.25);
+	--border-color: #202040;
 }
 
-button {
-	border-radius: 8px;
-	border: 1px solid transparent;
-	padding: 0.6em 1.2em;
-	font-size: 1em;
-	font-weight: 500;
-	font-family: inherit;
-	background-color: #1a1a1a;
-	cursor: pointer;
-	transition: border-color 0.25s;
-}
-button:hover {
-	border-color: #646cff;
-}
-button:focus,
-button:focus-visible {
-	outline: 4px auto -webkit-focus-ring-color;
-}
+[data-theme='white-black'] {
+	--primary-bg: #000000;
+	--primary-text: #555555;
+	--accent-color1: #eaeaea;
+	--accent-color2: #555555;
+	--secondary-bg: #1a1a1a;
+	--secondary-text: #ffffff;
 
-@media (prefers-color-scheme: light) {
-	:root {
-		color: #213547;
-		background-color: #ffffff;
-	}
-	a:hover {
-		color: #747bff;
-	}
-	button {
-		background-color: #f9f9f9;
-	}
+	--button-bg: #ffffff;
+	--button-text: #000000;
+	--button-hover-bg: #eaeaea;
+
+	--shadow-color: rgba(255, 255, 255, 0.2);
+	--border-color: #555555;
 }
