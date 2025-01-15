@@ -19,6 +19,24 @@ import {
 } from 'babylonjs';
 import { randomNumber } from './common';
 import { babylonProjectStatesI } from '../../components/SkillsContext';
+import {
+	loadingAnimationModelsNames,
+	loadingModelProps,
+	meshStartingPropsObject,
+	startingLoadingModels
+} from '../../startingValues';
+
+interface MeshMetadataI {
+	mainParent?: Node | AbstractMesh | Mesh;
+	mainParentName?: string;
+}
+
+interface animationOptionsI {
+	amplitude?: number;
+	speed?: number;
+	axis?: 'x' | 'y' | 'z';
+	type?: 'position' | 'rotation';
+}
 
 export const changeMeshVisibility = (node: Node, visibility: number): void => {
 	if (node instanceof AbstractMesh) {
@@ -32,50 +50,54 @@ export const changeMeshVisibility = (node: Node, visibility: number): void => {
 };
 
 export const loadModels = async (
-	modelsNames: string[],
+	startingModels: loadingModelProps[],
 	scene: Scene
 ): Promise<AbstractMesh[]> => {
 	const loadedModels = await Promise.all(
-		modelsNames.map(async modelName => {
+		startingModels.map(async startingModel => {
 			try {
 				const model = await SceneLoader.ImportMeshAsync(
 					'',
 					'./babylon/models/',
-					modelName,
+					startingModel.modelName,
 					scene
 				);
-
-				await Promise.all(
-					model.meshes.map(mesh =>
-						mesh.material?.getActiveTextures().map(texture => texture?.readPixels?.())
-					)
-				);
-
 				const mainMesh = model.meshes[0];
-				mainMesh.name = modelName.slice(0, modelName.indexOf('.'));
+				mainMesh.name = startingModel.modelName.slice(
+					0,
+					startingModel.modelName.indexOf('.')
+				);
 				mainMesh.rotation = new Vector3(0, 0, 0);
 
-				if (modelName === 'css3.gltf') {
-					mainMesh.position = new Vector3(0, 0.6, -1.6);
-					mainMesh.scaling = new Vector3(-0.007, 0.007, 0.007);
-					mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-				} else if (modelName === 'react.gltf') {
-					mainMesh.position = new Vector3(0, 2.1, 0);
-					mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-					mainMesh.scaling = new Vector3(0.3, 0.3, 0.3);
-				} else if (modelName === 'logos.gltf') {
-					mainMesh.position = new Vector3(0, 4.1, -1.1);
-					mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-					mainMesh.scaling = new Vector3(0.7, 0.7, -0.7);
-				} else if (modelName === 'html5.gltf') {
-					mainMesh.position = new Vector3(0, 2, 1.6);
-					mainMesh.rotation = new Vector3(0, Tools.ToRadians(180), 0);
-					mainMesh.scaling = new Vector3(0.25, 0.25, -0.25);
+				await Promise.all(
+					model.meshes.map(mesh => {
+						const meshMetadata: MeshMetadataI = {
+							mainParent: mainMesh,
+							mainParentName: mainMesh.name
+						};
+						mesh.metadata = meshMetadata;
+						mesh.material
+							?.getActiveTextures()
+							.map(texture => texture?.readPixels?.());
+					})
+				);
+
+				if (startingModel.position) {
+					mainMesh.position = startingModel.position;
+				}
+				if (startingModel.rotation) {
+					mainMesh.rotation = startingModel.rotation;
+				}
+				if (startingModel.scaling) {
+					mainMesh.scaling = startingModel.scaling;
 				}
 
 				return mainMesh;
 			} catch (error) {
-				console.error(`Ошибка при загрузке модели ${modelName}:`, error);
+				console.error(
+					`Ошибка при загрузке модели ${startingModel.modelName}:`,
+					error
+				);
 				return null;
 			}
 		})
@@ -83,13 +105,6 @@ export const loadModels = async (
 
 	return loadedModels.filter((model): model is AbstractMesh => model !== null);
 };
-
-interface animationOptionsI {
-	amplitude?: number;
-	speed?: number;
-	axis?: 'x' | 'y' | 'z';
-	type?: 'position' | 'rotation';
-}
 
 export const addCycleMeshAnimation = (
 	mesh: Node,
@@ -137,10 +152,26 @@ export const meshLookAtCamera = (mesh: Node): void => {
 	}
 };
 
-export function triggerMouseMeshLogic(e: ActionEvent) {
-	console.log(123);
+export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
+	if (type === 'OnPointerOverTrigger') {
+		triggerOverMesh(e);
+	}
+	if (type === 'OnPointerOutTrigger') {
+		triggerOutMesh(e);
+	}
 
-	console.log(e);
+	function triggerOverMesh(e: ActionEvent) {
+		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
+		if (mainParentName) {
+			revialTooltip(mainParentName);
+		}
+	}
+	function triggerOutMesh(e: ActionEvent) {
+		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
+		if (mainParentName) {
+			hideTooltip(mainParentName);
+		}
+	}
 }
 
 export const createScene = async (engine: Engine): Promise<Scene> => {
@@ -190,8 +221,7 @@ export const createLight = async (scene: Scene): Promise<DirectionalLight> => {
 export const createModels = async (
 	scene: Scene
 ): Promise<(Mesh | AbstractMesh)[]> => {
-	const modelsNames = ['css3.gltf', 'html5.gltf', 'react.gltf', 'logos.gltf'];
-	const modelsArray = await loadModels(modelsNames, scene);
+	const modelsArray = await loadModels(startingLoadingModels, scene);
 
 	modelsArray.forEach(model => {
 		if (model) {
@@ -205,9 +235,7 @@ export const createModels = async (
 		}
 	});
 
-	const animationModels: string[] = ['css3', 'html5', 'logos'];
-
-	animationModels.forEach(modelName => {
+	loadingAnimationModelsNames.forEach(modelName => {
 		const mesh = scene.getNodeByName(modelName);
 		if (mesh) {
 			const randomAmplitudePosition = randomNumber(-0.5, 0.5);
@@ -238,13 +266,24 @@ export const createModels = async (
 		}
 	});
 
-	const visibleModels: string[] = ['css3', 'html5', 'react', 'JAVASCRIPT_5'];
-	visibleModels.forEach(model => {
-		const mesh = scene.getNodeByName(model);
-		if (mesh) {
-			changeMeshVisibility(mesh, 1);
+	startingLoadingModels.forEach(model => {
+		const mesh = scene.getNodeByName(
+			model.modelName.slice(0, model.modelName.indexOf('.'))
+		);
+
+		if (mesh && typeof model.visibility === 'number') {
+			changeMeshVisibility(mesh, model.visibility);
 		}
 	});
+
+	for (const key in meshStartingPropsObject) {
+		const mesh = scene.getNodeByName(key);
+
+		if (mesh && typeof meshStartingPropsObject[key].visibility === 'number') {
+			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility);
+		}
+	}
+	console.log(meshStartingPropsObject);
 
 	return modelsArray;
 };
@@ -326,7 +365,7 @@ function addActionManagerToMesh(
 				const actionType = ActionManager[type as keyof typeof ActionManager];
 				mesh.actionManager!.registerAction(
 					new ExecuteCodeAction(actionType, e => {
-						console.log(`Trigger: ${type}`, e);
+						triggerMouseMeshLogic(type, e);
 					})
 				);
 			} else {
@@ -334,4 +373,11 @@ function addActionManagerToMesh(
 			}
 		});
 	});
+}
+
+function revialTooltip(tooltipName: string) {
+	console.log(tooltipName);
+}
+function hideTooltip(tooltipName: string) {
+	console.log(tooltipName);
 }

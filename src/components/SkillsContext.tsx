@@ -19,6 +19,14 @@ import React, {
 import { moveCamera } from '../functions/babylon/camera';
 import { changeMeshVisibility } from '../functions/babylon/models';
 
+export interface babylonProjectStatesI {
+	engine: Engine | null;
+	scene: Scene | null;
+	camera: ArcRotateCamera | null;
+	light: DirectionalLight | null;
+	models: (Mesh | AbstractMesh)[] | null;
+	shadows: ShadowGenerator | null;
+}
 interface SkillsContextType {
 	selectedSkill: string | null;
 	setSelectedSkill: (skill: string | null) => void;
@@ -26,12 +34,22 @@ interface SkillsContextType {
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>;
+	tooltipsArray: AbstractMesh[];
+	setTooltipsArray: React.Dispatch<React.SetStateAction<AbstractMesh[]>>;
+	activeTooltip: ActiveTooltip;
+	setactiveTooltip: React.Dispatch<React.SetStateAction<ActiveTooltip>>;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
 
 interface SkillsProviderProps {
 	children: ReactNode;
+}
+
+interface ActiveTooltip {
+	name: string;
+	tooltip?: AbstractMesh;
+	targetMesh?: AbstractMesh;
 }
 
 export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
@@ -45,6 +63,10 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			models: null,
 			shadows: null
 		});
+	const [tooltipsArray, setTooltipsArray] = useState<AbstractMesh[]>([]);
+	const [activeTooltip, setactiveTooltip] = useState<ActiveTooltip>({
+		name: ''
+	});
 
 	useEffect(() => {
 		if (babylonProjectStates.camera && selectedSkill !== '') {
@@ -76,7 +98,11 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				selectedSkill,
 				setSelectedSkill,
 				babylonProjectStates,
-				setBabylonProjectStates
+				setBabylonProjectStates,
+				tooltipsArray,
+				setTooltipsArray,
+				activeTooltip,
+				setactiveTooltip
 			}}
 		>
 			{children}
@@ -91,12 +117,3 @@ export const useSkillsContext = (): SkillsContextType => {
 	}
 	return context;
 };
-
-export interface babylonProjectStatesI {
-	engine: Engine | null;
-	scene: Scene | null;
-	camera: ArcRotateCamera | null;
-	light: DirectionalLight | null;
-	models: (Mesh | AbstractMesh)[] | null;
-	shadows: ShadowGenerator | null;
-}
