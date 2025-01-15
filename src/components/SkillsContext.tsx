@@ -34,10 +34,8 @@ interface SkillsContextType {
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>;
-	tooltipsArray: AbstractMesh[];
-	setTooltipsArray: React.Dispatch<React.SetStateAction<AbstractMesh[]>>;
 	activeTooltip: ActiveTooltip;
-	setactiveTooltip: React.Dispatch<React.SetStateAction<ActiveTooltip>>;
+	setActiveTooltip: React.Dispatch<React.SetStateAction<ActiveTooltip>>;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
@@ -48,6 +46,13 @@ interface SkillsProviderProps {
 
 interface ActiveTooltip {
 	name: string;
+	tooltip?: AbstractMesh;
+	targetMesh?: AbstractMesh;
+}
+export interface MeshesTooltips {
+	name: string;
+	targetMeshName: string;
+	text: string;
 	tooltip?: AbstractMesh;
 	targetMesh?: AbstractMesh;
 }
@@ -63,8 +68,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			models: null,
 			shadows: null
 		});
-	const [tooltipsArray, setTooltipsArray] = useState<AbstractMesh[]>([]);
-	const [activeTooltip, setactiveTooltip] = useState<ActiveTooltip>({
+	const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip>({
 		name: ''
 	});
 
@@ -99,10 +103,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				setSelectedSkill,
 				babylonProjectStates,
 				setBabylonProjectStates,
-				tooltipsArray,
-				setTooltipsArray,
 				activeTooltip,
-				setactiveTooltip
+				setActiveTooltip
 			}}
 		>
 			{children}

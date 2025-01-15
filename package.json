@@ -14,6 +14,7 @@
 		"@babylonjs/loaders": "^7.43.0",
 		"@types/babylonjs": "^2.3.31",
 		"babylonjs": "^7.43.0",
+		"babylonjs-gui": "^7.43.0",
 		"babylonjs-loaders": "^7.43.0",
 		"react": "^18.3.1",
 		"react-circular-progressbar": "^2.1.0",

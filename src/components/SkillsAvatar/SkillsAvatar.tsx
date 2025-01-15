@@ -2,20 +2,24 @@ import { useEffect, useRef } from 'react';
 import { useSkillsContext } from '../SkillsContext';
 import 'babylonjs-loaders';
 import './SkillsAvatar.css';
-import { createBabylonProject } from '../../functions/babylon/models';
+import {
+	createBabylonProject,
+	resumeCreateBabylonProject
+} from '../../functions/babylon/models';
 
 function SkillsAvatar() {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const { babylonProjectStates, setBabylonProjectStates } = useSkillsContext();
 
 	useEffect(() => {
-		if (babylonProjectStates.scene) {
-			babylonProjectStates.scene.debugLayer.show({
-				handleResize: false,
-				overlay: true
-			});
+		if (babylonProjectStates.engine) {
+			resumeCreateBabylonProject(
+				canvasRef.current!,
+				babylonProjectStates.engine,
+				setBabylonProjectStates
+			);
 		}
-	}, [babylonProjectStates.scene]);
+	}, [babylonProjectStates.engine]);
 
 	useEffect(() => {
 		const { current: canvas } = canvasRef;

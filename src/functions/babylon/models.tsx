@@ -17,13 +17,18 @@ import {
 	Tools,
 	Vector3
 } from 'babylonjs';
+import * as GUI from 'babylonjs-gui';
 import { randomNumber } from './common';
-import { babylonProjectStatesI } from '../../components/SkillsContext';
+import {
+	babylonProjectStatesI,
+	MeshesTooltips
+} from '../../components/SkillsContext';
 import {
 	loadingAnimationModelsNames,
 	loadingModelProps,
 	meshStartingPropsObject,
-	startingLoadingModels
+	startingLoadingModels,
+	startingTooltips
 } from '../../startingValues';
 
 interface MeshMetadataI {
@@ -283,7 +288,6 @@ export const createModels = async (
 			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility);
 		}
 	}
-	console.log(meshStartingPropsObject);
 
 	return modelsArray;
 };
@@ -317,11 +321,46 @@ export const createBabylonProject = async (
 		...prevState,
 		engine: engine
 	}));
+
+	return () => {
+		engine.dispose();
+	};
+};
+
+export const resumeCreateBabylonProject = async (
+	canvas: HTMLCanvasElement,
+	engine: Engine,
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
+): Promise<boolean> => {
 	const scene = await createScene(engine);
 	if (scene.isReady()) {
+		scene.debugLayer.show({
+			handleResize: false,
+			overlay: true
+		});
+		setBabylonProjectStates(prevState => ({
+			...prevState,
+			scene: scene
+		}));
 		const camera = await createCamera(scene, canvas);
 		const light = await createLight(scene).catch(() => null);
 		const models = await createModels(scene).catch(() => null);
+		if (models && startingTooltips.length > 0) {
+			const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
+			const text = new GUI.TextBlock();
+			text.text = 'Test GUI';
+			text.color = 'white';
+			text.fontSize = 24;
+			advancedTexture.addControl(text);
+			startingTooltips.map(tooltipObject => {
+				const model = scene.getNodeByName(tooltipObject.targetMeshName);
+				if (model) {
+					createMeshTooltip(model as AbstractMesh, tooltipObject);
+				}
+			});
+		}
 		let shadows: ShadowGenerator | null = null;
 		if (light && models) {
 			shadows = await createShadows(light, models).catch(() => null);
@@ -343,9 +382,7 @@ export const createBabylonProject = async (
 			engine.resize();
 		});
 	}
-	return () => {
-		engine.dispose();
-	};
+	return true;
 };
 
 function addActionManagerToMesh(
@@ -373,6 +410,11 @@ function addActionManagerToMesh(
 			}
 		});
 	});
+}
+
+function createMeshTooltip(mesh: AbstractMesh, tooltipObject: MeshesTooltips) {
+	console.log(mesh, tooltipObject.text);
+	//TODO Создать плашку с tooltipObject.text
 }
 
 function revialTooltip(tooltipName: string) {
