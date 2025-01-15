@@ -5,21 +5,20 @@ import './SkillsAvatar.css';
 import {
 	AbstractMesh,
 	ArcRotateCamera,
-	Color3,
 	Color4,
 	DirectionalLight,
 	Engine,
+	HDRCubeTexture,
 	Mesh,
-	MeshBuilder,
 	Scene,
-	SceneLoader,
 	ShadowGenerator,
-	StandardMaterial,
 	Tools,
-	TransformNode,
 	Vector3
 } from 'babylonjs';
-import { changeMeshVisibility } from '../../functions/babylon/models';
+import {
+	changeMeshVisibility,
+	loadModels
+} from '../../functions/babylon/models';
 
 const SkillsAvatar: React.FC = () => {
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -58,6 +57,18 @@ const SkillsAvatar: React.FC = () => {
 			const light = new DirectionalLight('dir01', new Vector3(0.3, -1, 0), scene);
 			light.position = new Vector3(0, 0, 0);
 			light.intensity = 3;
+
+			scene.environmentTexture = new HDRCubeTexture(
+				'./babylon/HDR-environment.hdr',
+				scene,
+				150
+			);
+			scene.createDefaultEnvironment({
+				groundSize: 50,
+				skyboxSize: 50,
+				environmentTexture: './babylon/HDR-environment.hdr'
+			});
+
 			return light;
 		};
 
@@ -65,64 +76,15 @@ const SkillsAvatar: React.FC = () => {
 			scene: Scene
 		): Promise<(Mesh | AbstractMesh)[]> => {
 			const modelsNames = ['css3.gltf', 'html5.gltf', 'react.gltf', 'logos.gltf'];
+			const modelsArray = await loadModels(modelsNames, scene);
 
-			const loadModels = async (): Promise<AbstractMesh[]> => {
-				const loadedModels = await Promise.all(
-					modelsNames.map(async modelName => {
-						try {
-							const model = await SceneLoader.ImportMeshAsync(
-								'',
-								'./babylon/models/',
-								modelName,
-								scene
-							);
-							const mainMesh = model.meshes[0];
-							changeMeshVisibility(mainMesh, 0);
-							if (modelName === 'css3.gltf') {
-								mainMesh.position = new Vector3(0.5, -2.5, 0.27);
-								mainMesh.scaling = new Vector3(0.027, 0.027, 0.027);
-								mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-							} else if (modelName === 'react.gltf') {
-								mainMesh.position = new Vector3(-0.3, 2.5, 0);
-								mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-							} else if (modelName === 'logos.gltf') {
-								mainMesh.position = new Vector3(0, 2.5, 0);
-								mainMesh.rotation = new Vector3(0, Tools.ToRadians(270), 0);
-							}
-							return mainMesh;
-						} catch (error) {
-							console.error(`Ошибка при загрузке модели ${modelName}:`, error);
-							return null;
-						}
-					})
-				);
-
-				return loadedModels.filter(
-					(model): model is AbstractMesh => model !== null
-				);
-			};
-
-			const modelsArray = await loadModels();
-
-			const ground = MeshBuilder.CreateGround(
-				'ground',
-				{ width: 6, height: 6 },
-				scene
-			);
-			ground.position.x = 0;
-
-			const groundMaterial = new StandardMaterial('groundMaterial', scene);
-			groundMaterial.emissiveColor = new Color3(0, 0, 0);
-			ground.material = groundMaterial;
-
-			modelsArray.push(ground);
-
-			const jsLogo: TransformNode | null =
-				scene.getTransformNodeByName('JAVASCRIPT_5');
-			if (jsLogo) {
-				changeMeshVisibility(jsLogo, 1);
-			}
-
+			const visibleModels: string[] = ['css3', 'html5', 'react', 'JAVASCRIPT_5'];
+			visibleModels.forEach(model => {
+				const mesh = scene.getNodeByName(model);
+				if (mesh) {
+					changeMeshVisibility(mesh, 1);
+				}
+			});
 			return modelsArray;
 		};
 
