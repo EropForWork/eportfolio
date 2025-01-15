@@ -5,7 +5,9 @@ import {
 	Engine,
 	Mesh,
 	Scene,
-	ShadowGenerator
+	ShadowGenerator,
+	Tools,
+	Vector3
 } from 'babylonjs';
 import React, {
 	useEffect,
@@ -48,15 +50,17 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		if (babylonProjectStates.camera && selectedSkill !== '') {
 			switch (selectedSkill) {
 				case '0':
-					changeMeshVisibility(
-						babylonProjectStates.scene?.getTransformNodeByName('JAVASCRIPT_5'),
-						0
-					);
-					// moveCamera(babylonProjectStates.camera, new Vector3(0, 0, 0), {
-					// 	alpha: Tools.ToRadians(50),
-					// 	beta: Tools.ToRadians(50),
-					// 	radius: 10
-					// });
+					{
+						const mesh = babylonProjectStates.scene?.getMeshByName('JAVASCRIPT_5');
+						if (mesh) {
+							changeMeshVisibility(mesh, 0);
+						}
+						moveCamera(babylonProjectStates.camera, new Vector3(0, 0, 0), {
+							alpha: Tools.ToRadians(50),
+							beta: Tools.ToRadians(50),
+							radius: 10
+						});
+					}
 					break;
 				default:
 					break;
