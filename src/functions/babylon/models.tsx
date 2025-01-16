@@ -172,15 +172,23 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 	function triggerOverMesh(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
 		const scene = e.meshUnderPointer?.getScene();
+
 		if (scene && mainParentName) {
-			revialTooltip(mainParentName, scene);
+			const tooltip = startingTooltips.find(
+				tooltip => tooltip.linkModelName === mainParentName
+			);
+			if (tooltip) tooltip.methods?.revial?.();
 		}
 	}
 	function triggerOutMesh(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
 		const scene = e.meshUnderPointer?.getScene();
+
 		if (scene && mainParentName) {
-			hideTooltip(mainParentName, scene);
+			const tooltip = startingTooltips.find(
+				tooltip => tooltip.linkModelName === mainParentName
+			);
+			if (tooltip) tooltip.methods?.hide?.();
 		}
 	}
 }
@@ -267,6 +275,8 @@ export async function createModels(
 ) {
 	const modelsArray = await loadModels(startingLoadingModels, scene);
 
+	createMeshTooltips(modelsArray, scene);
+
 	modelsArray.forEach(model => {
 		if (model) {
 			changeMeshVisibility(model, 0);
@@ -327,8 +337,6 @@ export async function createModels(
 			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility);
 		}
 	}
-
-	createMeshTooltips(modelsArray, scene);
 
 	setBabylonProjectStates(prevState => ({
 		...prevState,
@@ -469,17 +477,21 @@ function createMeshTooltip(
 
 	const textWidth = getTextWidth(tooltipObject.text, `20px ${fontFamily}`);
 	bg.width = textWidth + 30 + 'px';
-	setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene());
+	tooltipObject.gui = modelTooltip;
+	tooltipObject.name = modelTooltip.name;
+	tooltipObject.targetMesh = mesh;
+	tooltipObject.methods = tooltipObject.methods || {};
+	tooltipObject.methods.hide = () => {
+		setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene());
+	};
+	tooltipObject.methods.revial = () => {
+		setVisibleCurrentGUI(tooltipObject.linkModelName, 1, mesh.getScene());
+	};
+
+	tooltipObject.methods.hide();
 }
 
-function revialTooltip(meshName: string, scene: Scene) {
-	setVisibleCurrentGUI(meshName, 1, scene);
-}
-function hideTooltip(meshName: string, scene: Scene) {
-	setVisibleCurrentGUI(meshName, 0, scene);
-}
-
-function setVisibleCurrentGUI(
+export function setVisibleCurrentGUI(
 	meshName: string,
 	visibility: number,
 	scene: Scene
@@ -490,9 +502,16 @@ function setVisibleCurrentGUI(
 		return;
 	}
 
-	const tooltip = gui.getControlByName(meshName + '_tooltip') as GUI.TextBlock;
+	const tooltip = gui.getControlByName(meshName + '_tooltip') as GUI.Container;
 	if (tooltip) {
 		tooltip.isVisible = visibility > 0;
+		const bg = tooltip.children[0] as GUI.Rectangle;
+		if (!bg) {
+			return;
+		}
+		const rootStyles = getComputedStyle(document.documentElement);
+		bg.color = rootStyles.getPropertyValue('--button-text') || 'Green';
+		bg.background = rootStyles.getPropertyValue('--button-hover-bg') || 'Orange';
 	} else {
 		console.error(`No tooltip found for mesh: ${meshName}`);
 	}

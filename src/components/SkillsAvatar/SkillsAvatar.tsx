@@ -10,6 +10,7 @@ import {
 	createShadows,
 	startRenderScene
 } from '../../functions/babylon/models';
+import { startingTooltips } from '../../startingValues';
 
 function SkillsAvatar() {
 	const [hasInitialized, setHasInitialized] = useState(false);
@@ -17,6 +18,14 @@ function SkillsAvatar() {
 	const { babylonProjectStates, setBabylonProjectStates } = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
+
+	function leaveCanvas() {
+		if (startingTooltips.length > 0) {
+			startingTooltips.forEach(tooltip => {
+				tooltip.methods?.hide?.();
+			});
+		}
+	}
 
 	const createBabylonjsActions: Record<string, () => void> = {
 		idle: () => {
@@ -40,7 +49,13 @@ function SkillsAvatar() {
 		createBabylonjsActions[state]?.();
 	}, [state]);
 
-	return <canvas ref={canvasRef} className="avatar-container" />;
+	return (
+		<canvas
+			ref={canvasRef}
+			className="avatar-container"
+			onMouseLeave={leaveCanvas}
+		/>
+	);
 }
 
 export default SkillsAvatar;

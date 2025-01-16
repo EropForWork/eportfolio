@@ -70,6 +70,10 @@ export interface MeshTooltip {
 	name?: string;
 	gui?: GUI.Container;
 	targetMesh?: AbstractMesh;
+	methods?: {
+		hide?: () => void;
+		revial?: () => void;
+	};
 }
 
 export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
