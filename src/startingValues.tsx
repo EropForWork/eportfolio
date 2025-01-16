@@ -1,5 +1,5 @@
 import { Tools, Vector3 } from 'babylonjs';
-import { MeshesTooltips } from './components/SkillsContext';
+import { MeshTooltip } from './components/SkillsContext';
 
 export interface loadingModelProps {
 	modelName: string;
@@ -60,11 +60,26 @@ const loadingAnimationModelsNames: string[] = [
 	'react'
 ];
 
-const startingTooltips: MeshesTooltips[] = [
+const startingTooltips: MeshTooltip[] = [
 	{
-		name: 'css3_tooltip',
-		targetMeshName: 'css3',
+		linkModelName: 'css3',
+		positionMeshName: 'Object_5',
 		text: 'CSS3 Model Tooltip'
+	},
+	{
+		linkModelName: 'react',
+		positionMeshName: 'react',
+		text: 'React Model Tooltip'
+	},
+	{
+		linkModelName: 'logos',
+		positionMeshName: 'Object_22',
+		text: 'JavaScript Model Tooltip'
+	},
+	{
+		linkModelName: 'html5',
+		positionMeshName: 'Plane.002_five_0',
+		text: 'HTML5 Model Tooltip'
 	}
 ];
 

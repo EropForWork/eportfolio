@@ -21,7 +21,7 @@ import * as GUI from 'babylonjs-gui';
 import { randomNumber } from './common';
 import {
 	babylonProjectStatesI,
-	MeshesTooltips
+	MeshTooltip
 } from '../../components/SkillsContext';
 import {
 	loadingAnimationModelsNames,
@@ -34,6 +34,10 @@ import {
 interface MeshMetadataI {
 	mainParent?: Node | AbstractMesh | Mesh;
 	mainParentName?: string;
+}
+
+interface SceneMetadataI {
+	gui?: GUI.AdvancedDynamicTexture;
 }
 
 interface animationOptionsI {
@@ -167,14 +171,16 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 
 	function triggerOverMesh(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
-		if (mainParentName) {
-			revialTooltip(mainParentName);
+		const scene = e.meshUnderPointer?.getScene();
+		if (scene && mainParentName) {
+			revialTooltip(mainParentName, scene);
 		}
 	}
 	function triggerOutMesh(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
-		if (mainParentName) {
-			hideTooltip(mainParentName);
+		const scene = e.meshUnderPointer?.getScene();
+		if (scene && mainParentName) {
+			hideTooltip(mainParentName, scene);
 		}
 	}
 }
@@ -188,6 +194,8 @@ export async function createScene(
 	const scene = new Scene(engine);
 	scene.clearColor = new Color4(0, 0, 0, 0);
 	scene.hoverCursor = 'pointer';
+	const sceneMetadata: SceneMetadataI = {};
+	scene.metadata = sceneMetadata;
 	if (scene.isReady()) {
 		scene.debugLayer.show({
 			handleResize: false,
@@ -332,15 +340,12 @@ export async function createModels(
 function createMeshTooltips(modelsArray: AbstractMesh[], scene: Scene) {
 	if (modelsArray.length > 0 && startingTooltips.length > 0) {
 		const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
-		const text = new GUI.TextBlock();
-		text.text = 'Test GUI';
-		text.color = 'white';
-		text.fontSize = 24;
-		advancedTexture.addControl(text);
+		scene.metadata.gui = advancedTexture;
+
 		startingTooltips.map(tooltipObject => {
-			const model = scene.getNodeByName(tooltipObject.targetMeshName);
+			const model = scene.getNodeByName(tooltipObject.positionMeshName);
 			if (model) {
-				createMeshTooltip(model as AbstractMesh, tooltipObject);
+				createMeshTooltip(model as AbstractMesh, tooltipObject, advancedTexture);
 			}
 		});
 	}
@@ -434,14 +439,76 @@ function addActionManagerToMesh(
 	});
 }
 
-function createMeshTooltip(mesh: AbstractMesh, tooltipObject: MeshesTooltips) {
-	console.log(mesh, tooltipObject.text);
-	//TODO Создать плашку с tooltipObject.text
+function createMeshTooltip(
+	mesh: AbstractMesh,
+	tooltipObject: MeshTooltip,
+	advancedTexture: GUI.AdvancedDynamicTexture
+) {
+	const modelTooltip = new GUI.Container(
+		tooltipObject.linkModelName + '_tooltip'
+	);
+	advancedTexture.addControl(modelTooltip);
+	modelTooltip.linkWithMesh(mesh);
+	modelTooltip.linkOffsetY = -150;
+	const rootStyles = getComputedStyle(document.documentElement);
+	const fontFamily = rootStyles.getPropertyValue('--font-family') || 'Arial';
+
+	const bg = new GUI.Rectangle('rect');
+	bg.height = '40px';
+	bg.cornerRadius = 20;
+	bg.thickness = 3;
+	bg.color = rootStyles.getPropertyValue('--button-text') || 'Green';
+	bg.background = rootStyles.getPropertyValue('--button-hover-bg') || 'Orange';
+	bg.isPointerBlocker = false;
+	modelTooltip.addControl(bg);
+
+	const label = new GUI.TextBlock('tb', `${tooltipObject.text}`);
+	bg.addControl(label);
+	label.fontSize = 20;
+	label.fontFamily = rootStyles.getPropertyValue('--text-font');
+
+	const textWidth = getTextWidth(tooltipObject.text, `20px ${fontFamily}`);
+	bg.width = textWidth + 30 + 'px';
+	setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene());
 }
 
-function revialTooltip(tooltipName: string) {
-	console.log(tooltipName);
+function revialTooltip(meshName: string, scene: Scene) {
+	setVisibleCurrentGUI(meshName, 1, scene);
 }
-function hideTooltip(tooltipName: string) {
-	console.log(tooltipName);
+function hideTooltip(meshName: string, scene: Scene) {
+	setVisibleCurrentGUI(meshName, 0, scene);
+}
+
+function setVisibleCurrentGUI(
+	meshName: string,
+	visibility: number,
+	scene: Scene
+) {
+	const gui = scene.metadata?.gui as GUI.AdvancedDynamicTexture;
+	if (!gui) {
+		console.error('GUI not found on the scene metadata.');
+		return;
+	}
+
+	const tooltip = gui.getControlByName(meshName + '_tooltip') as GUI.TextBlock;
+	if (tooltip) {
+		tooltip.isVisible = visibility > 0;
+	} else {
+		console.error(`No tooltip found for mesh: ${meshName}`);
+	}
+}
+
+function getTextWidth(text: string, font: string) {
+	const element = document.createElement('canvas');
+	const context = element.getContext('2d');
+
+	if (!context) {
+		return 0;
+	}
+
+	context.font = font;
+	const width = context.measureText(text).width;
+	element.remove();
+
+	return Math.ceil(width);
 }

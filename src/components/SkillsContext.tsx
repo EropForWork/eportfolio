@@ -16,6 +16,7 @@ import React, {
 	useContext,
 	ReactNode
 } from 'react';
+import * as GUI from 'babylonjs-gui';
 import { moveCamera } from '../functions/babylon/camera';
 import { changeMeshVisibility } from '../functions/babylon/models';
 
@@ -62,11 +63,12 @@ interface ActiveTooltip {
 	tooltip?: AbstractMesh;
 	targetMesh?: AbstractMesh;
 }
-export interface MeshesTooltips {
-	name: string;
-	targetMeshName: string;
+export interface MeshTooltip {
+	linkModelName: string;
+	positionMeshName: string;
 	text: string;
-	tooltip?: AbstractMesh;
+	name?: string;
+	gui?: GUI.Container;
 	targetMesh?: AbstractMesh;
 }
 
