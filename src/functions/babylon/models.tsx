@@ -179,12 +179,32 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 	}
 }
 
-export const createScene = async (engine: Engine): Promise<Scene> => {
+export async function createScene(
+	engine: Engine,
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
+) {
 	const scene = new Scene(engine);
 	scene.clearColor = new Color4(0, 0, 0, 0);
 	scene.hoverCursor = 'pointer';
-	return scene;
-};
+	if (scene.isReady()) {
+		scene.debugLayer.show({
+			handleResize: false,
+			overlay: true
+		});
+		setBabylonProjectStates(prevState => ({
+			...prevState,
+			scene: scene
+		}));
+		const camera = await createCamera(scene, engine.getRenderingCanvas()!);
+		setBabylonProjectStates(prevState => ({
+			...prevState,
+			state: 'initialized',
+			camera: camera
+		}));
+	}
+}
 
 export const createCamera = async (
 	scene: Scene,
@@ -204,7 +224,12 @@ export const createCamera = async (
 	return camera;
 };
 
-export const createLight = async (scene: Scene): Promise<DirectionalLight> => {
+export function createLight(
+	scene: Scene,
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
+) {
 	const light = new DirectionalLight('dir01', new Vector3(0.3, -1, 0), scene);
 	light.position = new Vector3(0, 0, 0);
 	light.intensity = 3;
@@ -219,13 +244,19 @@ export const createLight = async (scene: Scene): Promise<DirectionalLight> => {
 		skyboxSize: 50,
 		environmentTexture: './babylon/HDR-environment.hdr'
 	});
+	setBabylonProjectStates(prevState => ({
+		...prevState,
+		state: 'loading',
+		light: light
+	}));
+}
 
-	return light;
-};
-
-export const createModels = async (
-	scene: Scene
-): Promise<(Mesh | AbstractMesh)[]> => {
+export async function createModels(
+	scene: Scene,
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
+) {
 	const modelsArray = await loadModels(startingLoadingModels, scene);
 
 	modelsArray.forEach(model => {
@@ -289,13 +320,39 @@ export const createModels = async (
 		}
 	}
 
-	return modelsArray;
-};
+	createMeshTooltips(modelsArray, scene);
 
-export const createShadows = async (
+	setBabylonProjectStates(prevState => ({
+		...prevState,
+		state: 'loaded',
+		models: modelsArray
+	}));
+}
+
+function createMeshTooltips(modelsArray: AbstractMesh[], scene: Scene) {
+	if (modelsArray.length > 0 && startingTooltips.length > 0) {
+		const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
+		const text = new GUI.TextBlock();
+		text.text = 'Test GUI';
+		text.color = 'white';
+		text.fontSize = 24;
+		advancedTexture.addControl(text);
+		startingTooltips.map(tooltipObject => {
+			const model = scene.getNodeByName(tooltipObject.targetMeshName);
+			if (model) {
+				createMeshTooltip(model as AbstractMesh, tooltipObject);
+			}
+		});
+	}
+}
+
+export function createShadows(
 	light: DirectionalLight,
-	models: (Mesh | AbstractMesh)[]
-): Promise<ShadowGenerator> => {
+	models: (Mesh | AbstractMesh)[],
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
+) {
 	const shadowGenerator = new ShadowGenerator(1024, light);
 	shadowGenerator.useBlurExponentialShadowMap = true;
 	shadowGenerator.blurKernel = 32;
@@ -304,87 +361,52 @@ export const createShadows = async (
 		model.receiveShadows = true;
 	});
 	light.autoCalcShadowZBounds = true;
-	return shadowGenerator;
-};
+	setBabylonProjectStates(prevState => ({
+		...prevState,
+		state: 'ready',
+		shadows: shadowGenerator
+	}));
+}
 
-export const createBabylonProject = async (
+export function createEngine(
 	canvas: HTMLCanvasElement,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>
-): Promise<() => void> => {
+) {
 	const engine = new Engine(canvas, true, {
 		adaptToDeviceRatio: true,
 		antialias: true
 	});
 	setBabylonProjectStates(prevState => ({
 		...prevState,
+		state: 'initializing',
 		engine: engine
 	}));
+}
 
-	return () => {
-		engine.dispose();
-	};
-};
-
-export const resumeCreateBabylonProject = async (
-	canvas: HTMLCanvasElement,
-	engine: Engine,
+export function startRenderScene(
+	babylonProjectStates: babylonProjectStatesI,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>
-): Promise<boolean> => {
-	const scene = await createScene(engine);
-	if (scene.isReady()) {
-		scene.debugLayer.show({
-			handleResize: false,
-			overlay: true
-		});
-		setBabylonProjectStates(prevState => ({
-			...prevState,
-			scene: scene
-		}));
-		const camera = await createCamera(scene, canvas);
-		const light = await createLight(scene).catch(() => null);
-		const models = await createModels(scene).catch(() => null);
-		if (models && startingTooltips.length > 0) {
-			const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
-			const text = new GUI.TextBlock();
-			text.text = 'Test GUI';
-			text.color = 'white';
-			text.fontSize = 24;
-			advancedTexture.addControl(text);
-			startingTooltips.map(tooltipObject => {
-				const model = scene.getNodeByName(tooltipObject.targetMeshName);
-				if (model) {
-					createMeshTooltip(model as AbstractMesh, tooltipObject);
-				}
-			});
-		}
-		let shadows: ShadowGenerator | null = null;
-		if (light && models) {
-			shadows = await createShadows(light, models).catch(() => null);
-		}
-
-		setBabylonProjectStates(prevState => ({
-			...prevState,
-			scene: scene,
-			camera: camera,
-			light: light,
-			models: models,
-			shadows: shadows || prevState.shadows
-		}));
-
-		engine.runRenderLoop(() => {
-			scene.render();
-		});
-		window.addEventListener('resize', () => {
-			engine.resize();
-		});
+) {
+	const engine = babylonProjectStates.engine;
+	const scene = babylonProjectStates.scene;
+	if (!engine || !scene) {
+		return;
 	}
-	return true;
-};
-
+	engine.runRenderLoop(() => {
+		scene.render();
+	});
+	window.addEventListener('resize', () => {
+		engine.resize();
+	});
+	setBabylonProjectStates(prevState => ({
+		...prevState,
+		state: 'running'
+	}));
+}
 function addActionManagerToMesh(
 	model: AbstractMesh,
 	actionManagerTypes: string[]

@@ -1,31 +1,45 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useSkillsContext } from '../SkillsContext';
 import 'babylonjs-loaders';
 import './SkillsAvatar.css';
 import {
-	createBabylonProject,
-	resumeCreateBabylonProject
+	createEngine,
+	createLight,
+	createModels,
+	createScene,
+	createShadows,
+	startRenderScene
 } from '../../functions/babylon/models';
 
 function SkillsAvatar() {
+	const [hasInitialized, setHasInitialized] = useState(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
 	const { babylonProjectStates, setBabylonProjectStates } = useSkillsContext();
 
-	useEffect(() => {
-		if (babylonProjectStates.engine) {
-			resumeCreateBabylonProject(
-				canvasRef.current!,
-				babylonProjectStates.engine,
-				setBabylonProjectStates
-			);
-		}
-	}, [babylonProjectStates.engine]);
+	const { state, engine, scene, light, models } = babylonProjectStates;
+
+	const createBabylonjsActions: Record<string, () => void> = {
+		idle: () => {
+			if (!hasInitialized && canvasRef.current) {
+				setHasInitialized(true);
+				createEngine(canvasRef.current, setBabylonProjectStates);
+			}
+		},
+		initializing: () => engine && createScene(engine, setBabylonProjectStates),
+		initialized: () => scene && createLight(scene, setBabylonProjectStates),
+		loading: () => scene && createModels(scene, setBabylonProjectStates),
+		loaded: () =>
+			light && models && createShadows(light, models, setBabylonProjectStates),
+		ready: () =>
+			engine &&
+			scene &&
+			startRenderScene(babylonProjectStates, setBabylonProjectStates)
+	};
 
 	useEffect(() => {
-		const { current: canvas } = canvasRef;
-		if (!canvas) return;
-		createBabylonProject(canvas, setBabylonProjectStates);
-	}, [canvasRef]);
+		createBabylonjsActions[state]?.();
+	}, [state]);
+
 	return <canvas ref={canvasRef} className="avatar-container" />;
 }
 

@@ -20,6 +20,19 @@ import { moveCamera } from '../functions/babylon/camera';
 import { changeMeshVisibility } from '../functions/babylon/models';
 
 export interface babylonProjectStatesI {
+	state:
+		| 'idle' // Ничего не происходит
+		| 'pending' // Ожидание старта
+		| 'initializing' // Начало инициализации
+		| 'initialized' // Сцена инициализирована
+		| 'loading' // Загрузка ресурсов
+		| 'loaded' // Ресурсы загружены
+		| 'ready' // Готово к рендерингу
+		| 'running' // Активный рендеринг
+		| 'paused' // Сцена приостановлена
+		| 'error' // Ошибка
+		| 'disposing' // Уничтожение сцены
+		| 'disposed'; // Сцена уничтожена
 	engine: Engine | null;
 	scene: Scene | null;
 	camera: ArcRotateCamera | null;
@@ -61,6 +74,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
 	const [babylonProjectStates, setBabylonProjectStates] =
 		useState<babylonProjectStatesI>({
+			state: 'idle',
 			engine: null,
 			scene: null,
 			camera: null,
