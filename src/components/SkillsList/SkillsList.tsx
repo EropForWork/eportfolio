@@ -53,7 +53,10 @@ const SkillsList = () => {
 											className="skill-block"
 											onPointerOver={() => handleProgrammOver(`${item.name}`)}
 											onPointerOut={() => handleProgrammOut(`${item.name}`)}
-											onClick={() => handleProgrammClick(`${item.name}`)}
+											onClick={event => {
+												event.stopPropagation();
+												handleProgrammClick(`${item.name}`);
+											}}
 										>
 											<span className="skill-icon">{item.icon}</span>
 											<span>{item.name}</span>

@@ -12,7 +12,7 @@ export function animateValue(
 ): (time: number) => number {
 	if (isNaN(from) || isNaN(to)) {
 		console.error('Invalid arguments for animateValue:', { from, to, duration });
-		return () => NaN; // Возвращаем "пустую" функцию
+		return () => NaN;
 	}
 	return (time: number) => {
 		const progress = Math.min(time / duration, 1);
