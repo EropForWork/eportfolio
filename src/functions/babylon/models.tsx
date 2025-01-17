@@ -23,15 +23,16 @@ import * as GUI from 'babylonjs-gui';
 import { animateValue, randomNumber } from './common';
 import {
 	babylonProjectStatesI,
+	loadingModelProps,
+	meshStartingProps,
 	MeshTooltip
 } from '../../components/SkillsContext';
-import {
-	loadingAnimationModelsNames,
-	loadingModelProps,
-	meshStartingPropsObject,
-	startingLoadingModels,
-	startingTooltips
-} from '../../startingValues';
+// import {
+// 	// loadingAnimationModelsNames,
+// 	// ,
+// 	// startingLoadingModels
+// 	// startingTooltips
+// } from '../../startingValues';
 
 interface MeshMetadataI {
 	mainParent?: Node | AbstractMesh | Mesh;
@@ -165,7 +166,11 @@ export const meshLookAtCamera = (mesh: Node): void => {
 	}
 };
 
-export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
+export function triggerMouseMeshLogic(
+	type: string,
+	e: ActionEvent,
+	startingTooltips: MeshTooltip[]
+) {
 	const mesh = e.meshUnderPointer;
 	if (!mesh) {
 		return;
@@ -359,21 +364,31 @@ export async function createModels(
 	scene: Scene,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
-	>
+	>,
+	startingLoadingModels: loadingModelProps[],
+	loadingAnimationModelsNames: string[],
+	meshStartingPropsObject: {
+		[key: string]: meshStartingProps;
+	},
+	startingTooltips: MeshTooltip[]
 ) {
 	const modelsArray = await loadModels(startingLoadingModels, scene);
 
-	createMeshTooltips(modelsArray, scene);
+	createMeshTooltips(modelsArray, scene, startingTooltips);
 
 	modelsArray.forEach(model => {
 		if (model) {
 			changeMeshVisibility(model, 0);
-			addActionManagerToMesh(model, [
-				'OnPointerOverTrigger',
-				'OnPointerOutTrigger',
-				'OnPickDownTrigger',
-				'OnPickUpTrigger'
-			]);
+			addActionManagerToMesh(
+				model,
+				[
+					'OnPointerOverTrigger',
+					'OnPointerOutTrigger',
+					'OnPickDownTrigger',
+					'OnPickUpTrigger'
+				],
+				startingTooltips
+			);
 		}
 	});
 
@@ -433,7 +448,11 @@ export async function createModels(
 	}));
 }
 
-function createMeshTooltips(modelsArray: AbstractMesh[], scene: Scene) {
+function createMeshTooltips(
+	modelsArray: AbstractMesh[],
+	scene: Scene,
+	startingTooltips: MeshTooltip[]
+) {
 	if (modelsArray.length > 0 && startingTooltips.length > 0) {
 		const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
 		scene.metadata.gui = advancedTexture;
@@ -510,7 +529,8 @@ export function startRenderScene(
 }
 function addActionManagerToMesh(
 	model: AbstractMesh,
-	actionManagerTypes: string[]
+	actionManagerTypes: string[],
+	startingTooltips: MeshTooltip[]
 ) {
 	const scene = model.getScene();
 	if (!scene) {
@@ -525,7 +545,7 @@ function addActionManagerToMesh(
 				const actionType = ActionManager[type as keyof typeof ActionManager];
 				mesh.actionManager!.registerAction(
 					new ExecuteCodeAction(actionType, e => {
-						triggerMouseMeshLogic(type, e);
+						triggerMouseMeshLogic(type, e, startingTooltips);
 					})
 				);
 			} else {

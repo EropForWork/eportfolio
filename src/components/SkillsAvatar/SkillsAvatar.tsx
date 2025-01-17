@@ -10,12 +10,18 @@ import {
 	createShadows,
 	startRenderScene
 } from '../../functions/babylon/models';
-import { startingTooltips } from '../../startingValues';
 
 function SkillsAvatar() {
 	const [hasInitialized, setHasInitialized] = useState(false);
 	const canvasRef = useRef<HTMLCanvasElement | null>(null);
-	const { babylonProjectStates, setBabylonProjectStates } = useSkillsContext();
+	const {
+		babylonProjectStates,
+		setBabylonProjectStates,
+		loadingAnimationModelsNames,
+		meshStartingPropsObject,
+		startingTooltips,
+		startingLoadingModels
+	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
 
@@ -36,7 +42,16 @@ function SkillsAvatar() {
 		},
 		initializing: () => engine && createScene(engine, setBabylonProjectStates),
 		initialized: () => scene && createLight(scene, setBabylonProjectStates),
-		loading: () => scene && createModels(scene, setBabylonProjectStates),
+		loading: () =>
+			scene &&
+			createModels(
+				scene,
+				setBabylonProjectStates,
+				startingLoadingModels,
+				loadingAnimationModelsNames,
+				meshStartingPropsObject,
+				startingTooltips
+			),
 		loaded: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),
 		ready: () =>

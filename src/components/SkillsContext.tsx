@@ -20,6 +20,21 @@ import * as GUI from 'babylonjs-gui';
 import { moveCamera } from '../functions/babylon/camera';
 import { changeMeshVisibility } from '../functions/babylon/models';
 
+export interface loadingModelProps {
+	modelName: string;
+	position?: Vector3;
+	rotation?: Vector3;
+	scaling?: Vector3;
+	visibility?: number;
+}
+
+export interface meshStartingProps {
+	position?: Vector3;
+	rotation?: Vector3;
+	scaling?: Vector3;
+	visibility?: number;
+}
+
 export interface babylonProjectStatesI {
 	state:
 		| 'idle' // Ничего не происходит
@@ -41,23 +56,10 @@ export interface babylonProjectStatesI {
 	models: (Mesh | AbstractMesh)[] | null;
 	shadows: ShadowGenerator | null;
 }
-interface SkillsContextType {
-	selectedSkill: string | null;
-	setSelectedSkill: (skill: string | null) => void;
-	babylonProjectStates: babylonProjectStatesI;
-	setBabylonProjectStates: React.Dispatch<
-		React.SetStateAction<babylonProjectStatesI>
-	>;
-	activeTooltip: ActiveTooltip;
-	setActiveTooltip: React.Dispatch<React.SetStateAction<ActiveTooltip>>;
-}
-
-const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
 
 interface SkillsProviderProps {
 	children: ReactNode;
 }
-
 interface ActiveTooltip {
 	name: string;
 	tooltip?: AbstractMesh;
@@ -76,8 +78,30 @@ export interface MeshTooltip {
 	};
 }
 
+interface SkillsContextType {
+	selectedSkill: string | null;
+	setSelectedSkill: React.Dispatch<React.SetStateAction<string | null>>;
+	babylonProjectStates: babylonProjectStatesI;
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>;
+	activeTooltip: ActiveTooltip;
+	setActiveTooltip: React.Dispatch<React.SetStateAction<ActiveTooltip>>;
+	selectedProgramm: string | null;
+	setSelectedProgramm: React.Dispatch<React.SetStateAction<string | null>>;
+	loadingAnimationModelsNames: string[];
+	meshStartingPropsObject: {
+		[key: string]: meshStartingProps;
+	};
+	startingTooltips: MeshTooltip[];
+	startingLoadingModels: loadingModelProps[];
+}
+
+const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
+
 export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+	const [selectedProgramm, setSelectedProgramm] = useState<string | null>(null);
 	const [babylonProjectStates, setBabylonProjectStates] =
 		useState<babylonProjectStatesI>({
 			state: 'idle',
@@ -91,6 +115,75 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip>({
 		name: ''
 	});
+
+	const [loadingAnimationModelsNames] = useState<string[]>([
+		'css3',
+		'html5',
+		'logos',
+		'react'
+	]);
+
+	const [meshStartingPropsObject] = useState<{
+		[key: string]: meshStartingProps;
+	}>({
+		JAVASCRIPT_5: {
+			visibility: 1
+		}
+	});
+
+	const [startingTooltips] = useState<MeshTooltip[]>([
+		{
+			linkModelName: 'css3',
+			positionMeshName: 'Object_5',
+			text: 'CSS3 Model Tooltip'
+		},
+		{
+			linkModelName: 'react',
+			positionMeshName: 'react',
+			text: 'React Model Tooltip'
+		},
+		{
+			linkModelName: 'logos',
+			positionMeshName: 'Object_22',
+			text: 'JavaScript Model Tooltip'
+		},
+		{
+			linkModelName: 'html5',
+			positionMeshName: 'Plane.002_five_0',
+			text: 'HTML5 Model Tooltip'
+		}
+	]);
+
+	const [startingLoadingModels] = useState<loadingModelProps[]>([
+		{
+			modelName: 'css3.gltf',
+			position: new Vector3(0, 0.6, -1.6),
+			rotation: new Vector3(0, Tools.ToRadians(270), 0),
+			scaling: new Vector3(-0.007, 0.007, 0.007),
+			visibility: 1
+		},
+		{
+			modelName: 'react.gltf',
+			position: new Vector3(0, 2.1, 0),
+			rotation: new Vector3(0, Tools.ToRadians(270), 0),
+			scaling: new Vector3(0.3, 0.3, 0.3),
+			visibility: 1
+		},
+		{
+			modelName: 'logos.gltf',
+			position: new Vector3(0, 4.1, -1.1),
+			rotation: new Vector3(0, Tools.ToRadians(270), 0),
+			scaling: new Vector3(0.7, 0.7, -0.7),
+			visibility: 0
+		},
+		{
+			modelName: 'html5.gltf',
+			position: new Vector3(0, 2, 1.6),
+			rotation: new Vector3(0, Tools.ToRadians(180), 0),
+			scaling: new Vector3(0.25, 0.25, -0.25),
+			visibility: 1
+		}
+	]);
 
 	useEffect(() => {
 		if (babylonProjectStates.camera && selectedSkill !== '') {
@@ -116,6 +209,22 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		}
 	}, [selectedSkill]);
 
+	useEffect(() => {
+		// if (babylonProjectStates.camera && selectedSkill !== '') {
+		// 	switch (selectedSkill) {
+		// 		case '0':
+		// 			console.log('');
+		// 			break;
+		// 		default:
+		// 			break;
+		// 	}
+		// 	setSelectedSkill('');
+		// }
+		// if (selectedProgramm !== '') {
+		// 	setSelectedProgramm('');
+		// }
+	}, [selectedProgramm]);
+
 	return (
 		<SkillsContext.Provider
 			value={{
@@ -124,7 +233,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				babylonProjectStates,
 				setBabylonProjectStates,
 				activeTooltip,
-				setActiveTooltip
+				setActiveTooltip,
+				selectedProgramm,
+				setSelectedProgramm,
+				loadingAnimationModelsNames,
+				meshStartingPropsObject,
+				startingTooltips,
+				startingLoadingModels
 			}}
 		>
 			{children}

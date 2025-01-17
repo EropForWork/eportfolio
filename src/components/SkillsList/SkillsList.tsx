@@ -76,10 +76,13 @@ const SkillsList = () => {
 		'📚 Высокий уровень обучаемости, адаптации к новым технологиям и инструментам'
 	];
 
-	const { setSelectedSkill } = useSkillsContext();
+	const { setSelectedSkill, setSelectedProgramm } = useSkillsContext();
 
 	const handleSkillClick = (skill: string) => {
 		setSelectedSkill(skill);
+	};
+	const handleProgrammClick = (programm: string) => {
+		setSelectedProgramm(programm);
 	};
 
 	return (
@@ -97,7 +100,11 @@ const SkillsList = () => {
 								<div className="skills-block">
 									<p className="skill-group-title">{skillGroup.text}:</p>
 									{skillGroup.items.map((item, idx) => (
-										<div key={idx} className="skill-block">
+										<div
+											key={idx}
+											className="skill-block"
+											onClick={() => handleProgrammClick(`${item.name}`)}
+										>
 											<span className="skill-icon">{item.icon}</span>
 											<span>{item.name}</span>
 											<div className="skill-chart">
