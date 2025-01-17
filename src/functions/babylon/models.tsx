@@ -86,7 +86,7 @@ export const loadModels = async (
 					model.meshes.map(mesh => {
 						const meshMetadata: MeshMetadataI = {
 							mainParent: mainMesh,
-							mainParentName: mainMesh.name
+							mainParentName: mainMesh.name.toLocaleLowerCase()
 						};
 						mesh.metadata = meshMetadata;
 						mesh.material
@@ -172,11 +172,12 @@ export function triggerMouseMeshLogic(
 	startingTooltips: MeshTooltip[]
 ) {
 	const mesh = e.meshUnderPointer;
-	if (!mesh) {
+	const scene = e.meshUnderPointer?.getScene();
+	if (!mesh || !scene) {
 		return;
 	}
 	if (type === 'OnPointerOverTrigger') {
-		revialTooltip(e);
+		revialTooltip(scene, mesh.metadata.mainParentName, startingTooltips);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -193,7 +194,7 @@ export function triggerMouseMeshLogic(
 		}
 	}
 	if (type === 'OnPointerOutTrigger') {
-		hideTooltip(e);
+		hideTooltip(scene, mesh.metadata.mainParentName, startingTooltips);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -260,29 +261,6 @@ export function triggerMouseMeshLogic(
 
 		mesh.animations.push(animation);
 		mesh.getScene().beginAnimation(mesh, 0, 60, false, 20);
-	}
-
-	function revialTooltip(e: ActionEvent) {
-		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
-		const scene = e.meshUnderPointer?.getScene();
-
-		if (scene && mainParentName) {
-			const tooltip = startingTooltips.find(
-				tooltip => tooltip.linkModelName === mainParentName
-			);
-			if (tooltip) tooltip.methods?.revial?.();
-		}
-	}
-	function hideTooltip(e: ActionEvent) {
-		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
-		const scene = e.meshUnderPointer?.getScene();
-
-		if (scene && mainParentName) {
-			const tooltip = startingTooltips.find(
-				tooltip => tooltip.linkModelName === mainParentName
-			);
-			if (tooltip) tooltip.methods?.hide?.();
-		}
 	}
 }
 
@@ -590,19 +568,20 @@ function createMeshTooltip(
 	tooltipObject.targetMesh = mesh;
 	tooltipObject.methods = tooltipObject.methods || {};
 	tooltipObject.methods.hide = () => {
-		setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene());
+		setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene(), 200);
 	};
 	tooltipObject.methods.revial = () => {
-		setVisibleCurrentGUI(tooltipObject.linkModelName, 1, mesh.getScene());
+		setVisibleCurrentGUI(tooltipObject.linkModelName, 1, mesh.getScene(), 200);
 	};
 
-	tooltipObject.methods.hide();
+	setVisibleCurrentGUI(tooltipObject.linkModelName, 0, mesh.getScene(), 0);
 }
 
 export function setVisibleCurrentGUI(
 	meshName: string,
 	visibility: number,
-	scene: Scene
+	scene: Scene,
+	duration: number = 300
 ) {
 	const gui = scene.metadata?.gui as GUI.AdvancedDynamicTexture;
 	if (!gui) {
@@ -612,14 +591,31 @@ export function setVisibleCurrentGUI(
 
 	const tooltip = gui.getControlByName(meshName + '_tooltip') as GUI.Container;
 	if (tooltip) {
-		tooltip.isVisible = visibility > 0;
+		tooltip.alpha = tooltip.alpha || 0;
+
+		const animationFn = animateValue(tooltip.alpha, visibility, duration);
+		const startTime = performance.now();
+
+		const updateOverlay = () => {
+			const currentTime = performance.now();
+			const elapsed = currentTime - startTime;
+			tooltip.alpha = animationFn(elapsed);
+
+			if (elapsed < duration) {
+				requestAnimationFrame(updateOverlay);
+			} else {
+				tooltip.alpha = visibility;
+			}
+		};
+
+		updateOverlay();
+
 		const bg = tooltip.children[0] as GUI.Rectangle;
-		if (!bg) {
-			return;
+		if (bg) {
+			const rootStyles = getComputedStyle(document.documentElement);
+			bg.color = rootStyles.getPropertyValue('--button-text') || 'Green';
+			bg.background = rootStyles.getPropertyValue('--button-hover-bg') || 'Orange';
 		}
-		const rootStyles = getComputedStyle(document.documentElement);
-		bg.color = rootStyles.getPropertyValue('--button-text') || 'Green';
-		bg.background = rootStyles.getPropertyValue('--button-hover-bg') || 'Orange';
 	} else {
 		console.error(`No tooltip found for mesh: ${meshName}`);
 	}
@@ -674,4 +670,33 @@ function hexToColor3(hex: string): Color3 {
 	const g = parseInt(hexValue.substring(2, 4), 16) / 255;
 	const b = parseInt(hexValue.substring(4, 6), 16) / 255;
 	return new Color3(r, g, b);
+}
+
+export function revialTooltip(
+	scene: Scene,
+	mainParentName: string,
+	startingTooltips: MeshTooltip[]
+) {
+	if (scene && mainParentName) {
+		const tooltip = startingTooltips.find(
+			tooltip =>
+				tooltip.linkModelName === mainParentName ||
+				tooltip.linkTextProgramm === mainParentName
+		);
+		if (tooltip) tooltip.methods?.revial?.();
+	}
+}
+export function hideTooltip(
+	scene: Scene,
+	mainParentName: string,
+	startingTooltips: MeshTooltip[]
+) {
+	if (scene && mainParentName) {
+		const tooltip = startingTooltips.find(
+			tooltip =>
+				tooltip.linkModelName === mainParentName ||
+				tooltip.linkTextProgramm === mainParentName
+		);
+		if (tooltip) tooltip.methods?.hide?.();
+	}
 }

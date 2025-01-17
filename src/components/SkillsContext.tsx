@@ -85,6 +85,7 @@ interface ActiveTooltip {
 export interface MeshTooltip {
 	linkModelName: string;
 	positionMeshName: string;
+	linkTextProgramm: string;
 	text: string;
 	name?: string;
 	gui?: GUI.Container;
@@ -165,21 +166,25 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	const [startingTooltips] = useState<MeshTooltip[]>([
 		{
 			linkModelName: 'css3',
+			linkTextProgramm: 'css',
 			positionMeshName: 'Object_5',
 			text: 'CSS3 Model Tooltip'
 		},
 		{
 			linkModelName: 'react',
+			linkTextProgramm: 'react',
 			positionMeshName: 'react',
 			text: 'React Model Tooltip'
 		},
 		{
 			linkModelName: 'logos',
+			linkTextProgramm: 'javascript',
 			positionMeshName: 'Object_22',
 			text: 'JavaScript Model Tooltip'
 		},
 		{
 			linkModelName: 'html5',
+			linkTextProgramm: 'html',
 			positionMeshName: 'Plane.002_five_0',
 			text: 'HTML5 Model Tooltip'
 		}

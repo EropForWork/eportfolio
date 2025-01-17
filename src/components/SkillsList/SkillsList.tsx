@@ -2,16 +2,35 @@ import './SkillsList.css';
 import { useSkillsContext } from '../SkillsContext';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
+import { hideTooltip, revialTooltip } from '../../functions/babylon/models';
 
 const SkillsList = () => {
-	const { setSelectedSkill, setSelectedProgramm, hardSkills, softSkills } =
-		useSkillsContext();
-
+	const {
+		setSelectedSkill,
+		setSelectedProgramm,
+		hardSkills,
+		softSkills,
+		startingTooltips,
+		babylonProjectStates
+	} = useSkillsContext();
+	const { scene } = babylonProjectStates;
 	const handleSkillClick = (skill: string) => {
 		setSelectedSkill(skill);
 	};
 	const handleProgrammClick = (programm: string) => {
 		setSelectedProgramm(programm);
+	};
+	const handleProgrammOver = (programm: string) => {
+		if (!scene) {
+			return;
+		}
+		revialTooltip(scene, programm.toLocaleLowerCase(), startingTooltips);
+	};
+	const handleProgrammOut = (programm: string) => {
+		if (!scene) {
+			return;
+		}
+		hideTooltip(scene, programm.toLocaleLowerCase(), startingTooltips);
 	};
 
 	return (
@@ -32,6 +51,8 @@ const SkillsList = () => {
 										<div
 											key={idx}
 											className="skill-block"
+											onPointerOver={() => handleProgrammOver(`${item.name}`)}
+											onPointerOut={() => handleProgrammOut(`${item.name}`)}
 											onClick={() => handleProgrammClick(`${item.name}`)}
 										>
 											<span className="skill-icon">{item.icon}</span>
