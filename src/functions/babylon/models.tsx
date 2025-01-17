@@ -2,6 +2,7 @@ import {
 	AbstractMesh,
 	ActionEvent,
 	ActionManager,
+	Animatable,
 	Animation,
 	ArcRotateCamera,
 	Color4,
@@ -34,6 +35,7 @@ import {
 interface MeshMetadataI {
 	mainParent?: Node | AbstractMesh | Mesh;
 	mainParentName?: string;
+	cycleAnimation?: Animatable;
 }
 
 interface SceneMetadataI {
@@ -164,9 +166,27 @@ export const meshLookAtCamera = (mesh: Node): void => {
 export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 	if (type === 'OnPointerOverTrigger') {
 		triggerOverMesh(e);
+		if (
+			e.meshUnderPointer?.getScene() &&
+			e.meshUnderPointer?.metadata.mainParentName
+		) {
+			stopCycleAnimation(
+				e.meshUnderPointer?.getScene(),
+				e.meshUnderPointer?.metadata.mainParentName
+			);
+		}
 	}
 	if (type === 'OnPointerOutTrigger') {
 		triggerOutMesh(e);
+		if (
+			e.meshUnderPointer?.getScene() &&
+			e.meshUnderPointer?.metadata.mainParentName
+		) {
+			resumeCycleAnimation(
+				e.meshUnderPointer?.getScene(),
+				e.meshUnderPointer?.metadata.mainParentName
+			);
+		}
 	}
 
 	function triggerOverMesh(e: ActionEvent) {
@@ -530,4 +550,32 @@ function getTextWidth(text: string, font: string) {
 	element.remove();
 
 	return Math.ceil(width);
+}
+
+function stopCycleAnimation(scene: Scene, meshName: string) {
+	const mesh = scene.getNodeByName(meshName);
+	if (mesh && mesh.animations) {
+		const activeAnimation = scene._activeAnimatables.find(anim =>
+			anim._runtimeAnimations.some(
+				runtimeAnim => runtimeAnim.animation === mesh.animations[0]
+			)
+		);
+
+		if (activeAnimation) {
+			mesh.metadata = {
+				...mesh.metadata,
+				cycleAnimation: activeAnimation
+			};
+			activeAnimation.pause();
+		}
+	}
+}
+function resumeCycleAnimation(scene: Scene, meshName: string) {
+	const mesh = scene.getNodeByName(meshName);
+	if (mesh && mesh.animations) {
+		const { cycleAnimation } = mesh.metadata || {};
+		if (cycleAnimation !== undefined) {
+			(cycleAnimation as Animatable).restart();
+		}
+	}
 }
