@@ -5,6 +5,7 @@ import {
 	Animatable,
 	Animation,
 	ArcRotateCamera,
+	Color3,
 	Color4,
 	DirectionalLight,
 	Engine,
@@ -19,7 +20,7 @@ import {
 	Vector3
 } from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
-import { randomNumber } from './common';
+import { animateValue, randomNumber } from './common';
 import {
 	babylonProjectStatesI,
 	MeshTooltip
@@ -90,6 +91,7 @@ export const loadModels = async (
 						mesh.material
 							?.getActiveTextures()
 							.map(texture => texture?.readPixels?.());
+						mesh.overlayAlpha = 0;
 					})
 				);
 
@@ -164,8 +166,17 @@ export const meshLookAtCamera = (mesh: Node): void => {
 };
 
 export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
+	const mesh = e.meshUnderPointer;
+	if (!mesh) {
+		return;
+	}
 	if (type === 'OnPointerOverTrigger') {
-		triggerOverMesh(e);
+		revialTooltip(e);
+		const rootStyles = getComputedStyle(document.documentElement);
+		const color3 =
+			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
+			new Color3(255, 0, 0);
+		changeMeshOverlayAlpha(mesh, 0.9, 0.3, color3);
 		if (
 			e.meshUnderPointer?.getScene() &&
 			e.meshUnderPointer?.metadata.mainParentName
@@ -177,7 +188,12 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 		}
 	}
 	if (type === 'OnPointerOutTrigger') {
-		triggerOutMesh(e);
+		hideTooltip(e);
+		const rootStyles = getComputedStyle(document.documentElement);
+		const color3 =
+			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
+			new Color3(255, 0, 0);
+		changeMeshOverlayAlpha(mesh, 0, 0.3, color3);
 		if (
 			e.meshUnderPointer?.getScene() &&
 			e.meshUnderPointer?.metadata.mainParentName
@@ -188,8 +204,60 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 			);
 		}
 	}
+	if (type === 'OnPickUpTrigger') {
+		bounceModelAnimation(e.meshUnderPointer as AbstractMesh);
+	}
 
-	function triggerOverMesh(e: ActionEvent) {
+	function changeMeshOverlayAlpha(
+		mesh: AbstractMesh,
+		to: number | 1,
+		duration: number | 1,
+		color?: Color3
+	) {
+		mesh.renderOverlay = true;
+		mesh.overlayColor = color || new Color3(255, 0, 0);
+		const animationFn = animateValue(mesh.overlayAlpha, to, duration * 1000);
+		const startTime = performance.now();
+
+		const updateOverlay = () => {
+			const currentTime = performance.now();
+			const elapsed = currentTime - startTime;
+			mesh.overlayAlpha = animationFn(elapsed);
+
+			if (elapsed < duration * 1000) {
+				requestAnimationFrame(updateOverlay);
+			} else {
+				mesh.overlayAlpha = to;
+			}
+		};
+
+		updateOverlay();
+	}
+
+	function bounceModelAnimation(mesh: AbstractMesh) {
+		const animation = new Animation(
+			'scaleAnimation',
+			'scaling',
+			30,
+			Animation.ANIMATIONTYPE_VECTOR3,
+			Animation.ANIMATIONLOOPMODE_CONSTANT
+		);
+		animation.setKeys([
+			{ frame: 0, value: mesh.scaling.clone() },
+			{ frame: 30, value: mesh.scaling.scale(0.9) },
+			{ frame: 60, value: mesh.scaling.clone() }
+		]);
+
+		const easing = new BABYLON.QuadraticEase();
+		easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+
+		animation.setEasingFunction(easing);
+
+		mesh.animations.push(animation);
+		mesh.getScene().beginAnimation(mesh, 0, 60, false, 20);
+	}
+
+	function revialTooltip(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
 		const scene = e.meshUnderPointer?.getScene();
 
@@ -200,7 +268,7 @@ export function triggerMouseMeshLogic(type: string, e: ActionEvent) {
 			if (tooltip) tooltip.methods?.revial?.();
 		}
 	}
-	function triggerOutMesh(e: ActionEvent) {
+	function hideTooltip(e: ActionEvent) {
 		const mainParentName = e.meshUnderPointer?.metadata.mainParentName || null;
 		const scene = e.meshUnderPointer?.getScene();
 
@@ -578,4 +646,12 @@ function resumeCycleAnimation(scene: Scene, meshName: string) {
 			(cycleAnimation as Animatable).restart();
 		}
 	}
+}
+
+function hexToColor3(hex: string): Color3 {
+	const hexValue = hex.replace('#', '');
+	const r = parseInt(hexValue.substring(0, 2), 16) / 255;
+	const g = parseInt(hexValue.substring(2, 4), 16) / 255;
+	const b = parseInt(hexValue.substring(4, 6), 16) / 255;
+	return new Color3(r, g, b);
 }
