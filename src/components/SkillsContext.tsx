@@ -35,6 +35,7 @@ import {
 import { MdBuild } from 'react-icons/md';
 import * as GUI from 'babylonjs-gui';
 import { changeMeshVisibility } from '../functions/babylon/models';
+import { CameraPropsI, moveCamera } from '../functions/babylon/camera';
 
 export interface loadingModelProps {
 	modelName: string;
@@ -43,6 +44,7 @@ export interface loadingModelProps {
 	rotation?: Vector3;
 	scaling?: Vector3;
 	visibility?: number;
+	cameraProps?: CameraPropsI;
 }
 
 export interface meshStartingProps {
@@ -51,6 +53,7 @@ export interface meshStartingProps {
 	rotation?: Vector3;
 	scaling?: Vector3;
 	visibility?: number;
+	cameraProps?: CameraPropsI;
 }
 
 export interface babylonProjectStatesI {
@@ -150,6 +153,16 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		name: ''
 	});
 
+	const [startingCameraProps] = useState<CameraPropsI>({
+		target: new Vector3(-1, 2.5, 0),
+		alpha: Tools.ToRadians(180),
+		beta: Tools.ToRadians(80),
+		radius: 6
+	});
+
+	const [cameraProps, setCameraProps] =
+		useState<CameraPropsI>(startingCameraProps);
+
 	const [loadingAnimationModelsNames] = useState<string[]>([
 		'css',
 		'html',
@@ -162,7 +175,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	}>({
 		JAVASCRIPT_5: {
 			linkName: 'js',
-			visibility: 1
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(0.4, 3.5, -0.3),
+				alpha: Tools.ToRadians(170),
+				beta: Tools.ToRadians(85),
+				radius: 6
+			}
 		}
 	});
 
@@ -200,7 +219,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			position: new Vector3(0, 0.6, -1.6),
 			rotation: new Vector3(0, Tools.ToRadians(270), 0),
 			scaling: new Vector3(-0.007, 0.007, 0.007),
-			visibility: 1
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(2, 1.7, -2),
+				alpha: Tools.ToRadians(162),
+				beta: Tools.ToRadians(85),
+				radius: 5
+			}
 		},
 		{
 			modelName: 'react.gltf',
@@ -208,7 +233,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			position: new Vector3(0, 2.1, 0),
 			rotation: new Vector3(0, Tools.ToRadians(270), 0),
 			scaling: new Vector3(0.3, 0.3, 0.3),
-			visibility: 1
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(-1, 2.5, 0),
+				alpha: Tools.ToRadians(180),
+				beta: Tools.ToRadians(65),
+				radius: 3
+			}
 		},
 		{
 			modelName: 'logos.gltf',
@@ -216,7 +247,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			position: new Vector3(0, 4.1, -1.1),
 			rotation: new Vector3(0, Tools.ToRadians(270), 0),
 			scaling: new Vector3(0.7, 0.7, -0.7),
-			visibility: 0
+			visibility: 0,
+			cameraProps: {
+				target: new Vector3(0.4, 3.5, -0.3),
+				alpha: Tools.ToRadians(170),
+				beta: Tools.ToRadians(85),
+				radius: 6
+			}
 		},
 		{
 			modelName: 'html5.gltf',
@@ -224,7 +261,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			position: new Vector3(0, 2, 1.6),
 			rotation: new Vector3(0, Tools.ToRadians(180), 0),
 			scaling: new Vector3(0.25, 0.25, -0.25),
-			visibility: 1
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(2, 2.5, 1.8),
+				alpha: Tools.ToRadians(180),
+				beta: Tools.ToRadians(85),
+				radius: 6
+			}
 		}
 	]);
 
@@ -284,6 +327,16 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	]);
 
 	useEffect(() => {
+		if (cameraProps && babylonProjectStates.camera) {
+			moveCamera(babylonProjectStates.camera, cameraProps.target.clone(), {
+				alpha: cameraProps.alpha,
+				beta: cameraProps.beta,
+				radius: cameraProps.radius
+			});
+		}
+	}, [cameraProps]);
+
+	useEffect(() => {
 		if (selectedSkill !== '') {
 			const scene = babylonProjectStates.scene;
 			if (!scene) {
@@ -309,28 +362,17 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 			});
 
+			if (babylonProjectStates.camera && startingCameraProps) {
+				setCameraProps({
+					target: startingCameraProps.target.clone(),
+					alpha: startingCameraProps.alpha,
+					beta: startingCameraProps.beta,
+					radius: startingCameraProps.radius
+				});
+			}
+
 			setSelectedSkill('');
 		}
-		// if (babylonProjectStates.camera && selectedSkill !== '') {
-		// 	switch (selectedSkill) {
-		// 		case '0':
-		// 			{
-		// 				const mesh = babylonProjectStates.scene?.getMeshByName('JAVASCRIPT_5');
-		// 				if (mesh) {
-		// 					changeMeshVisibility(mesh, 0);
-		// 				}
-		// 				moveCamera(babylonProjectStates.camera, new Vector3(0, 0, 0), {
-		// 					alpha: Tools.ToRadians(50),
-		// 					beta: Tools.ToRadians(50),
-		// 					radius: 10
-		// 				});
-		// 			}
-		// 			break;
-		// 		default:
-		// 			break;
-		// 	}
-		// 	setSelectedSkill('');
-		// }
 	}, [selectedSkill]);
 
 	useEffect(() => {
@@ -350,14 +392,25 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!mesh) {
 				return;
 			}
-
-			startingLoadingModels.map(modelObject => {
+			startingLoadingModels.forEach(modelObject => {
 				const mesh = scene.getNodeByName(modelObject.linkName);
 				if (!mesh) {
 					return;
 				}
 				if (modelObject.visibility !== undefined) {
 					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
+				}
+				if (
+					mesh.name === meshName &&
+					modelObject.cameraProps &&
+					babylonProjectStates.camera
+				) {
+					setCameraProps({
+						target: modelObject.cameraProps.target.clone(),
+						alpha: modelObject.cameraProps.alpha,
+						beta: modelObject.cameraProps.beta,
+						radius: modelObject.cameraProps.radius
+					});
 				}
 			});
 			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
@@ -369,7 +422,21 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				if (value.visibility !== undefined) {
 					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
 				}
+
+				if (
+					mesh.name === meshName &&
+					value.cameraProps &&
+					babylonProjectStates.camera
+				) {
+					setCameraProps({
+						target: value.cameraProps.target.clone(),
+						alpha: value.cameraProps.alpha,
+						beta: value.cameraProps.beta,
+						radius: value.cameraProps.radius
+					});
+				}
 			});
+
 			setSelectedProgramm('');
 		}
 	}, [selectedProgramm]);

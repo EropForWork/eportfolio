@@ -4,15 +4,18 @@ import {
 	ActionManager,
 	Animatable,
 	Animation,
+	AnimationGroup,
 	ArcRotateCamera,
 	Color3,
 	Color4,
 	DirectionalLight,
+	EasingFunction,
 	Engine,
 	ExecuteCodeAction,
 	HDRCubeTexture,
 	Mesh,
 	Node,
+	QuadraticEase,
 	Scene,
 	SceneLoader,
 	ShadowGenerator,
@@ -51,7 +54,8 @@ interface animationOptionsI {
 export const changeMeshVisibility = (
 	node: Node,
 	visibility: number,
-	saveVisibility: boolean = true
+	saveVisibility: boolean = true,
+	duration: number = 300
 ): void => {
 	(node.metadata as MeshMetadataI) = {
 		...node.metadata,
@@ -60,13 +64,38 @@ export const changeMeshVisibility = (
 	};
 
 	if (node instanceof AbstractMesh) {
+		const easingFunction = new QuadraticEase();
+		easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+
+		const animationGroup = new AnimationGroup('meshVisibilityAnimationGroup');
+		const visibilityAnimation = new Animation(
+			'visibilityAnimation',
+			'visibility',
+			60,
+			Animation.ANIMATIONTYPE_FLOAT,
+			Animation.ANIMATIONLOOPMODE_CONSTANT
+		);
+
+		const keyFrames = [
+			{ frame: 0, value: node.visibility },
+			{ frame: (duration / 1000) * 60, value: visibility }
+		];
+		visibilityAnimation.setKeys(keyFrames);
+		visibilityAnimation.setEasingFunction(easingFunction);
+
+		animationGroup.addTargetedAnimation(visibilityAnimation, node);
+
 		const isVisible = visibility !== 0;
-		node.visibility = visibility;
 		node.isPickable = isVisible;
+		animationGroup.onAnimationGroupEndObservable.add(() => {
+			animationGroup.dispose();
+		});
+
+		animationGroup.start();
 	}
 
 	node.getChildren().forEach(child => {
-		changeMeshVisibility(child, visibility, saveVisibility);
+		changeMeshVisibility(child, visibility, saveVisibility, duration);
 	});
 };
 
@@ -363,7 +392,7 @@ export async function createModels(
 
 	modelsArray.forEach(model => {
 		if (model) {
-			changeMeshVisibility(model, 0);
+			changeMeshVisibility(model, 0, true, 0);
 			addActionManagerToMesh(
 				model,
 				[
@@ -412,7 +441,7 @@ export async function createModels(
 		const mesh = scene.getNodeByName(model.linkName);
 
 		if (mesh && typeof model.visibility === 'number') {
-			changeMeshVisibility(mesh, model.visibility);
+			changeMeshVisibility(mesh, model.visibility, true, 0);
 		}
 	});
 
@@ -441,7 +470,7 @@ export async function createModels(
 		);
 
 		if (typeof meshStartingPropsObject[key].visibility === 'number') {
-			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility);
+			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility, true, 0);
 		}
 	}
 
