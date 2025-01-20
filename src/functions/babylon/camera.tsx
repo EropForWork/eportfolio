@@ -4,7 +4,8 @@ import {
 	EasingFunction,
 	QuadraticEase,
 	Animation,
-	AnimationGroup
+	AnimationGroup,
+	Scene
 } from 'babylonjs';
 
 export interface CameraPropsI {
@@ -13,6 +14,25 @@ export interface CameraPropsI {
 	beta: number;
 	radius: number;
 }
+
+export const createCamera = async (
+	scene: Scene,
+	canvas: HTMLCanvasElement,
+	startingCameraProps: CameraPropsI
+): Promise<ArcRotateCamera> => {
+	const camera = new ArcRotateCamera(
+		'camera',
+		0,
+		0,
+		startingCameraProps.radius,
+		startingCameraProps.target,
+		scene
+	);
+	camera.alpha = startingCameraProps.alpha;
+	camera.beta = startingCameraProps.beta;
+	camera.attachControl(canvas, true);
+	return camera;
+};
 
 export const moveCamera = (
 	camera: ArcRotateCamera,

@@ -20,7 +20,9 @@ function SkillsAvatar() {
 		loadingAnimationModelsNames,
 		meshStartingPropsObject,
 		startingTooltips,
-		startingLoadingModels
+		startingLoadingModels,
+		startingCameraProps,
+		setCameraProps
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
@@ -40,7 +42,8 @@ function SkillsAvatar() {
 				createEngine(canvasRef.current, setBabylonProjectStates);
 			}
 		},
-		initializing: () => engine && createScene(engine, setBabylonProjectStates),
+		initializing: () =>
+			engine && createScene(engine, setBabylonProjectStates, startingCameraProps),
 		initialized: () => scene && createLight(scene, setBabylonProjectStates),
 		loading: () =>
 			scene &&
@@ -54,10 +57,12 @@ function SkillsAvatar() {
 			),
 		loaded: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),
-		ready: () =>
-			engine &&
-			scene &&
-			startRenderScene(babylonProjectStates, setBabylonProjectStates)
+		ready: () => {
+			if (engine && scene) {
+				startRenderScene(babylonProjectStates, setBabylonProjectStates);
+				setCameraProps(startingCameraProps);
+			}
+		}
 	};
 
 	useEffect(() => {

@@ -5,7 +5,6 @@ import {
 	Animatable,
 	Animation,
 	AnimationGroup,
-	ArcRotateCamera,
 	Color3,
 	Color4,
 	DirectionalLight,
@@ -19,7 +18,6 @@ import {
 	Scene,
 	SceneLoader,
 	ShadowGenerator,
-	Tools,
 	Vector3
 } from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
@@ -30,6 +28,7 @@ import {
 	meshStartingProps,
 	MeshTooltip
 } from '../../components/SkillsContext';
+import { CameraPropsI, createCamera } from './camera';
 
 interface MeshMetadataI {
 	visibility: number;
@@ -304,7 +303,8 @@ export async function createScene(
 	engine: Engine,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
-	>
+	>,
+	startingCameraProps: CameraPropsI
 ) {
 	const scene = new Scene(engine);
 	scene.clearColor = new Color4(0, 0, 0, 0);
@@ -320,7 +320,11 @@ export async function createScene(
 			...prevState,
 			scene: scene
 		}));
-		const camera = await createCamera(scene, engine.getRenderingCanvas()!);
+		const camera = await createCamera(
+			scene,
+			engine.getRenderingCanvas()!,
+			startingCameraProps
+		);
 		setBabylonProjectStates(prevState => ({
 			...prevState,
 			state: 'initialized',
@@ -328,24 +332,6 @@ export async function createScene(
 		}));
 	}
 }
-
-export const createCamera = async (
-	scene: Scene,
-	canvas: HTMLCanvasElement
-): Promise<ArcRotateCamera> => {
-	const camera = new ArcRotateCamera(
-		'camera',
-		Math.PI / 2,
-		Math.PI / 2,
-		6,
-		new Vector3(-1, 2.5, 0),
-		scene
-	);
-	camera.alpha = Tools.ToRadians(180);
-	camera.beta = Tools.ToRadians(80);
-	camera.attachControl(canvas, true);
-	return camera;
-};
 
 export function createLight(
 	scene: Scene,

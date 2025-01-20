@@ -132,6 +132,8 @@ interface SkillsContextType {
 	};
 	startingTooltips: MeshTooltip[];
 	startingLoadingModels: loadingModelProps[];
+	startingCameraProps: CameraPropsI;
+	setCameraProps: React.Dispatch<React.SetStateAction<CameraPropsI | null>>;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
@@ -152,16 +154,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	const [activeTooltip, setActiveTooltip] = useState<ActiveTooltip>({
 		name: ''
 	});
-
 	const [startingCameraProps] = useState<CameraPropsI>({
 		target: new Vector3(-1, 2.5, 0),
 		alpha: Tools.ToRadians(180),
 		beta: Tools.ToRadians(80),
 		radius: 6
 	});
-
-	const [cameraProps, setCameraProps] =
-		useState<CameraPropsI>(startingCameraProps);
+	const [cameraProps, setCameraProps] = useState<CameraPropsI | null>(null);
 
 	const [loadingAnimationModelsNames] = useState<string[]>([
 		'css',
@@ -457,7 +456,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				loadingAnimationModelsNames,
 				meshStartingPropsObject,
 				startingTooltips,
-				startingLoadingModels
+				startingLoadingModels,
+				startingCameraProps,
+				setCameraProps
 			}}
 		>
 			{children}
