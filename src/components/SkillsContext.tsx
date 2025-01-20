@@ -289,7 +289,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!scene) {
 				return;
 			}
-			startingLoadingModels.map(modelObject => {
+			startingLoadingModels.forEach(modelObject => {
 				const mesh = scene.getNodeByName(modelObject.linkName);
 				if (!mesh) {
 					return;
@@ -298,8 +298,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					changeMeshVisibility(mesh, modelObject.visibility);
 				}
 			});
-			Object.entries(meshStartingPropsObject).forEach(([key, value]) => {
-				const mesh = scene.getNodeByName(key);
+			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
+				const mesh = scene.getNodeByName(value.linkName);
 				if (!mesh) {
 					return;
 				}
@@ -356,17 +356,17 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				if (!mesh) {
 					return;
 				}
-				if (modelObject.visibility) {
+				if (modelObject.visibility !== undefined) {
 					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
 				}
 			});
-			Object.entries(meshStartingPropsObject).forEach(([key, value]) => {
-				const mesh = scene.getNodeByName(key);
+			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
+				const mesh = scene.getNodeByName(value.linkName);
 				if (!mesh) {
 					return;
 				}
 
-				if (value.visibility) {
+				if (value.visibility !== undefined) {
 					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
 				}
 			});

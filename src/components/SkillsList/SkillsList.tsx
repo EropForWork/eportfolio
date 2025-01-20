@@ -24,6 +24,7 @@ const SkillsList = () => {
 		if (!scene) {
 			return;
 		}
+
 		revialTooltip(scene, programm.toLocaleLowerCase(), startingTooltips);
 	};
 	const handleProgrammOut = (programm: string) => {
@@ -51,8 +52,8 @@ const SkillsList = () => {
 										<div
 											key={idx}
 											className="skill-block"
-											onPointerOver={() => handleProgrammOver(`${item.name}`)}
-											onPointerOut={() => handleProgrammOut(`${item.name}`)}
+											onPointerOver={() => handleProgrammOver(`${item.linkName}`)}
+											onPointerOut={() => handleProgrammOut(`${item.linkName}`)}
 											onClick={event => {
 												event.stopPropagation();
 												handleProgrammClick(`${item.name}`);

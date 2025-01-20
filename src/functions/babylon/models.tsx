@@ -29,6 +29,7 @@ import {
 } from '../../components/SkillsContext';
 
 interface MeshMetadataI {
+	visibility: number;
 	mainParent?: Node | AbstractMesh | Mesh;
 	mainParentName?: string;
 	cycleAnimation?: Animatable;
@@ -47,15 +48,25 @@ interface animationOptionsI {
 	type?: 'position' | 'rotation';
 }
 
-export const changeMeshVisibility = (node: Node, visibility: number): void => {
+export const changeMeshVisibility = (
+	node: Node,
+	visibility: number,
+	saveVisibility: boolean = true
+): void => {
+	(node.metadata as MeshMetadataI) = {
+		...node.metadata,
+		realVisibility: saveVisibility ? undefined : node.metadata.visibility,
+		visibility: visibility
+	};
+
 	if (node instanceof AbstractMesh) {
-		const isVisible = visibility === 0 ? false : true;
+		const isVisible = visibility !== 0;
 		node.visibility = visibility;
 		node.isPickable = isVisible;
 	}
 
 	node.getChildren().forEach(child => {
-		changeMeshVisibility(child, visibility);
+		changeMeshVisibility(child, visibility, saveVisibility);
 	});
 };
 
@@ -79,6 +90,7 @@ export const loadModels = async (
 				await Promise.all(
 					model.meshes.map(mesh => {
 						const meshMetadata: MeshMetadataI = {
+							visibility: startingModel.visibility ? startingModel.visibility : 1,
 							mainParent: mainMesh,
 							mainParentName: mainMesh.name.toLocaleLowerCase(),
 							linkName: startingModel.linkName
@@ -164,11 +176,7 @@ export const meshLookAtCamera = (mesh: Node): void => {
 export function triggerMouseMeshLogic(
 	type: string,
 	e: ActionEvent,
-	startingTooltips: MeshTooltip[],
-	startingLoadingModels: loadingModelProps[],
-	meshStartingPropsObject: {
-		[key: string]: meshStartingProps;
-	}
+	startingTooltips: MeshTooltip[]
 ) {
 	const mesh = e.meshUnderPointer;
 	const scene = e.meshUnderPointer?.getScene();
@@ -176,13 +184,7 @@ export function triggerMouseMeshLogic(
 		return;
 	}
 	if (type === 'OnPointerOverTrigger') {
-		revialTooltip(
-			scene,
-			mesh.metadata.linkName,
-			startingTooltips,
-			startingLoadingModels,
-			meshStartingPropsObject
-		);
+		revialTooltip(scene, mesh.metadata.linkName, startingTooltips);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -199,13 +201,7 @@ export function triggerMouseMeshLogic(
 		}
 	}
 	if (type === 'OnPointerOutTrigger') {
-		hideTooltip(
-			scene,
-			mesh.metadata.mainParentName,
-			startingTooltips,
-			startingLoadingModels,
-			meshStartingPropsObject
-		);
+		hideTooltip(scene, mesh.metadata.linkName, startingTooltips);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -376,9 +372,7 @@ export async function createModels(
 					'OnPickDownTrigger',
 					'OnPickUpTrigger'
 				],
-				startingTooltips,
-				startingLoadingModels,
-				meshStartingPropsObject
+				startingTooltips
 			);
 		}
 	});
@@ -427,7 +421,25 @@ export async function createModels(
 		if (!mesh) {
 			return;
 		}
+		(mesh.metadata as MeshMetadataI) = {
+			...mesh.metadata,
+			visibility: meshStartingPropsObject[key].visibility
+				? meshStartingPropsObject[key].visibility
+				: 1,
+			linkName: meshStartingPropsObject[key].linkName
+		};
 		mesh.name = meshStartingPropsObject[key].linkName;
+		mesh.getChildMeshes().forEach(
+			mesh =>
+				((mesh.metadata as MeshMetadataI) = {
+					...mesh.metadata,
+					visibility: meshStartingPropsObject[key].visibility
+						? meshStartingPropsObject[key].visibility
+						: 1,
+					linkName: meshStartingPropsObject[key].linkName
+				})
+		);
+
 		if (typeof meshStartingPropsObject[key].visibility === 'number') {
 			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility);
 		}
@@ -522,11 +534,7 @@ export function startRenderScene(
 function addActionManagerToMesh(
 	model: AbstractMesh,
 	actionManagerTypes: string[],
-	startingTooltips: MeshTooltip[],
-	startingLoadingModels: loadingModelProps[],
-	meshStartingPropsObject: {
-		[key: string]: meshStartingProps;
-	}
+	startingTooltips: MeshTooltip[]
 ) {
 	const scene = model.getScene();
 	if (!scene) {
@@ -541,13 +549,7 @@ function addActionManagerToMesh(
 				const actionType = ActionManager[type as keyof typeof ActionManager];
 				mesh.actionManager!.registerAction(
 					new ExecuteCodeAction(actionType, e => {
-						triggerMouseMeshLogic(
-							type,
-							e,
-							startingTooltips,
-							startingLoadingModels,
-							meshStartingPropsObject
-						);
+						triggerMouseMeshLogic(type, e, startingTooltips);
 					})
 				);
 			} else {
@@ -697,60 +699,46 @@ function hexToColor3(hex: string): Color3 {
 export function revialTooltip(
 	scene: Scene,
 	linkName: string,
-	startingTooltips: MeshTooltip[],
-	startingLoadingModels: loadingModelProps[],
-	meshStartingPropsObject: {
-		[key: string]: meshStartingProps;
-	}
+	startingTooltips: MeshTooltip[]
 ) {
 	if (scene && linkName) {
 		const tooltip = startingTooltips.find(
 			tooltip => tooltip.linkName === linkName
 		);
 		if (tooltip) {
-			// const meshName = startingLoadingModels
-			// 	// .flatMap(skill => skill.items)
-			// 	.find(item => item.linkName === linkName)?.linkName;
-			//TODO найти в meshStartingPropsObject или startingLoadingModels linkName
-			//TODO найти в двух массивах нудный меш
+			tooltip.methods?.revial?.();
 
 			const model = scene.getNodeByName(tooltip.linkName);
-			console.log(model);
-			// 		// const meshName = hardSkills
-			// 		// .flatMap(skill => skill.items)
-			// 		// .find(item => item.name === selectedProgramm)?.linkName;
-			// 		const model = scene.getNodeByName(tooltip.linkName);
-			// 		if (model && (model as AbstractMesh).visibility < 0.3) {
-			// 			model.metadata.realVisibility = (model as AbstractMesh).visibility;
-			// 			changeMeshVisibility(model, 0.3);
-			// 		}
-			// 		tooltip.methods?.revial?.();
+			if (!model) {
+				return;
+			}
+			const visibility: number =
+				(model as AbstractMesh).visibility ??
+				(model.metadata as MeshMetadataI).visibility ??
+				1;
+
+			if (visibility < 0.3) {
+				changeMeshVisibility(model, 0.3, false);
+			}
 		}
 	}
 }
 export function hideTooltip(
 	scene: Scene,
-	mainParentName: string,
-	startingTooltips: MeshTooltip[],
-	startingLoadingModels: loadingModelProps[],
-	meshStartingPropsObject: {
-		[key: string]: meshStartingProps;
-	}
+	linkName: string,
+	startingTooltips: MeshTooltip[]
 ) {
-	if (scene && mainParentName) {
+	if (scene && linkName) {
 		const tooltip = startingTooltips.find(
-			tooltip =>
-				tooltip.linkName === mainParentName ||
-				tooltip.linkTextProgramm === mainParentName
+			tooltip => tooltip.linkName === linkName
 		);
 		if (tooltip) {
+			tooltip.methods?.hide?.();
 			const model = scene.getNodeByName(tooltip.linkName);
 
 			if (model && model.metadata.realVisibility !== undefined) {
 				changeMeshVisibility(model, model.metadata.realVisibility);
-				model.metadata.realVisibility = undefined;
 			}
-			tooltip.methods?.hide?.();
 		}
 	}
 }
