@@ -166,7 +166,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		'css',
 		'html',
 		'logos',
-		'react'
+		'react',
+		'git'
 	]);
 
 	const [meshStartingPropsObject] = useState<{
@@ -208,6 +209,12 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			linkTextProgramm: 'html',
 			positionMeshName: 'Plane.002_five_0',
 			text: 'HTML5 Model Tooltip'
+		},
+		{
+			linkName: 'git',
+			linkTextProgramm: 'git',
+			positionMeshName: 'git',
+			text: 'GIT Model Tooltip'
 		}
 	]);
 
@@ -267,6 +274,20 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				beta: Tools.ToRadians(85),
 				radius: 6
 			}
+		},
+		{
+			modelName: 'git.gltf',
+			linkName: 'git',
+			position: new Vector3(0, 2, 0),
+			rotation: new Vector3(0, Tools.ToRadians(90), 0),
+			scaling: new Vector3(1, 1, 1),
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(1.9, 1.7, 0),
+				alpha: Tools.ToRadians(180),
+				beta: Tools.ToRadians(85),
+				radius: 5
+			}
 		}
 	]);
 
@@ -285,7 +306,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		{
 			text: 'Контроль версий',
 			icon: <MdBuild />,
-			items: [{ name: 'Git', icon: <FaGitAlt />, level: 70 }]
+			items: [{ name: 'Git', icon: <FaGitAlt />, level: 70, linkName: 'git' }]
 		},
 		{
 			text: 'Инструменты разработки',

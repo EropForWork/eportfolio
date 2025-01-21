@@ -121,5 +121,6 @@ export const moveCamera = (
 		animationGroup.dispose();
 	});
 
-	animationGroup.start(true);
+	// animationGroup.start(true);
+	animationGroup.start(false);
 };
