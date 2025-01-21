@@ -22,7 +22,8 @@ function SkillsAvatar() {
 		startingTooltips,
 		startingLoadingModels,
 		startingCameraProps,
-		setCameraProps
+		setCameraProps,
+		modelGroups
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
@@ -53,7 +54,8 @@ function SkillsAvatar() {
 				startingLoadingModels,
 				loadingAnimationModelsNames,
 				meshStartingPropsObject,
-				startingTooltips
+				startingTooltips,
+				modelGroups
 			),
 		loaded: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),

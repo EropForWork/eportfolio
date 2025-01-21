@@ -18,6 +18,7 @@ import {
 	Scene,
 	SceneLoader,
 	ShadowGenerator,
+	TransformNode,
 	Vector3
 } from 'babylonjs';
 import * as GUI from 'babylonjs-gui';
@@ -37,6 +38,7 @@ interface MeshMetadataI {
 	cycleAnimation?: Animatable;
 	realVisibility?: number;
 	linkName?: string;
+	linkGroupName?: string;
 }
 
 interface SceneMetadataI {
@@ -48,6 +50,13 @@ interface animationOptionsI {
 	speed?: number;
 	axis?: 'x' | 'y' | 'z';
 	type?: 'position' | 'rotation';
+}
+
+export interface ModelGroupsI {
+	[groupName: string]: {
+		linkNames: string[];
+		models: AbstractMesh[] | Mesh[] | Node[] | TransformNode[];
+	};
 }
 
 export const changeMeshVisibility = (
@@ -63,34 +72,38 @@ export const changeMeshVisibility = (
 	};
 
 	if (node instanceof AbstractMesh) {
-		const easingFunction = new QuadraticEase();
-		easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
+		if (duration === 0) {
+			node.visibility = visibility;
+		} else {
+			const easingFunction = new QuadraticEase();
+			easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
 
-		const animationGroup = new AnimationGroup('meshVisibilityAnimationGroup');
-		const visibilityAnimation = new Animation(
-			'visibilityAnimation',
-			'visibility',
-			60,
-			Animation.ANIMATIONTYPE_FLOAT,
-			Animation.ANIMATIONLOOPMODE_CONSTANT
-		);
+			const animationGroup = new AnimationGroup('meshVisibilityAnimationGroup');
+			const visibilityAnimation = new Animation(
+				'visibilityAnimation',
+				'visibility',
+				60,
+				Animation.ANIMATIONTYPE_FLOAT,
+				Animation.ANIMATIONLOOPMODE_CONSTANT
+			);
 
-		const keyFrames = [
-			{ frame: 0, value: node.visibility },
-			{ frame: (duration / 1000) * 60, value: visibility }
-		];
-		visibilityAnimation.setKeys(keyFrames);
-		visibilityAnimation.setEasingFunction(easingFunction);
+			const keyFrames = [
+				{ frame: 0, value: node.visibility },
+				{ frame: (duration / 1000) * 60, value: visibility }
+			];
+			visibilityAnimation.setKeys(keyFrames);
+			visibilityAnimation.setEasingFunction(easingFunction);
 
-		animationGroup.addTargetedAnimation(visibilityAnimation, node);
+			animationGroup.addTargetedAnimation(visibilityAnimation, node);
 
-		const isVisible = visibility !== 0;
-		node.isPickable = isVisible;
-		animationGroup.onAnimationGroupEndObservable.add(() => {
-			animationGroup.dispose();
-		});
+			const isVisible = visibility !== 0;
+			node.isPickable = isVisible;
+			animationGroup.onAnimationGroupEndObservable.add(() => {
+				animationGroup.dispose();
+			});
 
-		animationGroup.start();
+			animationGroup.start();
+		}
 	}
 
 	node.getChildren().forEach(child => {
@@ -100,7 +113,8 @@ export const changeMeshVisibility = (
 
 export const loadModels = async (
 	startingModels: loadingModelProps[],
-	scene: Scene
+	scene: Scene,
+	modelGroups: ModelGroupsI
 ): Promise<AbstractMesh[]> => {
 	const loadedModels = await Promise.all(
 		startingModels.map(async startingModel => {
@@ -121,7 +135,11 @@ export const loadModels = async (
 							visibility: startingModel.visibility ? startingModel.visibility : 1,
 							mainParent: mainMesh,
 							mainParentName: mainMesh.name.toLocaleLowerCase(),
-							linkName: startingModel.linkName
+							linkName: startingModel.linkName,
+							linkGroupName:
+								Object.entries(modelGroups).find(([, group]) =>
+									group.linkNames.includes(startingModel.linkName)
+								)?.[0] || 'common'
 						};
 						mesh.metadata = meshMetadata;
 						mesh.material
@@ -370,9 +388,14 @@ export async function createModels(
 	meshStartingPropsObject: {
 		[key: string]: meshStartingProps;
 	},
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	modelGroups: ModelGroupsI
 ) {
-	const modelsArray = await loadModels(startingLoadingModels, scene);
+	const modelsArray = await loadModels(
+		startingLoadingModels,
+		scene,
+		modelGroups
+	);
 
 	createMeshTooltips(modelsArray, scene, startingTooltips);
 
@@ -423,14 +446,6 @@ export async function createModels(
 		}
 	});
 
-	startingLoadingModels.forEach(model => {
-		const mesh = scene.getNodeByName(model.linkName);
-
-		if (mesh && typeof model.visibility === 'number') {
-			changeMeshVisibility(mesh, model.visibility, true, 0);
-		}
-	});
-
 	for (const key in meshStartingPropsObject) {
 		const mesh = scene.getNodeByName(key);
 		if (!mesh) {
@@ -454,10 +469,6 @@ export async function createModels(
 					linkName: meshStartingPropsObject[key].linkName
 				})
 		);
-
-		if (typeof meshStartingPropsObject[key].visibility === 'number') {
-			changeMeshVisibility(mesh, meshStartingPropsObject[key].visibility, true, 0);
-		}
 	}
 
 	setBabylonProjectStates(prevState => ({

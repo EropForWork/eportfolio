@@ -34,7 +34,10 @@ import {
 } from 'react-icons/si';
 import { MdBuild } from 'react-icons/md';
 import * as GUI from 'babylonjs-gui';
-import { changeMeshVisibility } from '../functions/babylon/models';
+import {
+	changeMeshVisibility,
+	ModelGroupsI
+} from '../functions/babylon/models';
 import { CameraPropsI, moveCamera } from '../functions/babylon/camera';
 
 export interface loadingModelProps {
@@ -45,6 +48,7 @@ export interface loadingModelProps {
 	scaling?: Vector3;
 	visibility?: number;
 	cameraProps?: CameraPropsI;
+	linkGroupName?: string;
 }
 
 export interface meshStartingProps {
@@ -54,6 +58,7 @@ export interface meshStartingProps {
 	scaling?: Vector3;
 	visibility?: number;
 	cameraProps?: CameraPropsI;
+	linkGroupName?: string;
 }
 
 export interface babylonProjectStatesI {
@@ -111,13 +116,14 @@ interface HardSkillI {
 	text: string;
 	icon: ReactNode;
 	items: SkillItemI[];
+	skillLinkName?: string;
 }
 
 interface SkillsContextType {
 	hardSkills: HardSkillI[];
 	softSkills: string[];
 	selectedSkill: string | null;
-	setSelectedSkill: React.Dispatch<React.SetStateAction<string | null>>;
+	setSelectedSkill: React.Dispatch<React.SetStateAction<string>>;
 	babylonProjectStates: babylonProjectStatesI;
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
@@ -134,12 +140,13 @@ interface SkillsContextType {
 	startingLoadingModels: loadingModelProps[];
 	startingCameraProps: CameraPropsI;
 	setCameraProps: React.Dispatch<React.SetStateAction<CameraPropsI | null>>;
+	modelGroups: ModelGroupsI;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
 
 export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
-	const [selectedSkill, setSelectedSkill] = useState<string | null>(null);
+	const [selectedSkill, setSelectedSkill] = useState<string>('0');
 	const [selectedProgramm, setSelectedProgramm] = useState<string | null>(null);
 	const [babylonProjectStates, setBabylonProjectStates] =
 		useState<babylonProjectStatesI>({
@@ -291,6 +298,23 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		}
 	]);
 
+	const [modelGroups] = useState<ModelGroupsI>({
+		programming: {
+			linkNames: ['css', 'html', 'react', 'js', 'logos'],
+			models: []
+		},
+		versionControl: { linkNames: ['git'], models: [] },
+		programmingTools: {
+			linkNames: ['vscode', 'sublime'],
+			models: []
+		},
+		graphicTools: {
+			linkNames: ['photoshop', 'illustrator', 'coreldraw', 'figma'],
+			models: []
+		},
+		neuro: { linkNames: ['neuro'], models: [] }
+	});
+
 	const [hardSkills] = useState<HardSkillI[]>([
 		{
 			text: 'Фронтенд разработка',
@@ -301,12 +325,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				{ name: 'JavaScript', icon: <FaJs />, level: 95, linkName: 'js' },
 				{ name: 'React', icon: <FaReact />, level: 60, linkName: 'react' },
 				{ name: 'AS3', icon: <SiAsciidoctor />, level: 95 }
-			]
+			],
+			skillLinkName: 'programming'
 		},
 		{
 			text: 'Контроль версий',
 			icon: <MdBuild />,
-			items: [{ name: 'Git', icon: <FaGitAlt />, level: 70, linkName: 'git' }]
+			items: [{ name: 'Git', icon: <FaGitAlt />, level: 70, linkName: 'git' }],
+			skillLinkName: 'versionControl'
 		},
 		{
 			text: 'Инструменты разработки',
@@ -314,7 +340,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			items: [
 				{ name: 'Visual Studio Code', icon: <FaLaptopCode />, level: 95 },
 				{ name: 'Sublime Text', icon: <FaLaptopCode />, level: 95 }
-			]
+			],
+			skillLinkName: 'programmingTools'
 		},
 		{
 			text: 'Графический дизайн',
@@ -324,7 +351,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				{ name: 'Photoshop', icon: <SiAdobephotoshop />, level: 60 },
 				{ name: 'Illustrator', icon: <SiAdobeillustrator />, level: 60 },
 				{ name: 'Figma', icon: <SiFigma />, level: 30 }
-			]
+			],
+			skillLinkName: 'graphicTools'
 		},
 		{
 			text: 'Нейросети',
@@ -335,7 +363,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					icon: <FaNetworkWired />,
 					level: 70
 				}
-			]
+			],
+			skillLinkName: 'neuro'
 		}
 	]);
 
@@ -357,31 +386,34 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	}, [cameraProps]);
 
 	useEffect(() => {
-		if (selectedSkill !== '') {
-			const scene = babylonProjectStates.scene;
-			if (!scene) {
-				return;
+		if (selectedSkill !== '' && babylonProjectStates.state === 'running') {
+			const modelGroup =
+				modelGroups[hardSkills[parseInt(selectedSkill)].skillLinkName || 'common'];
+			if (modelGroup) {
+				const scene = babylonProjectStates.scene;
+				if (!scene) {
+					return;
+				}
+				startingLoadingModels.forEach(modelObject => {
+					const mesh = scene.getNodeByName(modelObject.linkName);
+					if (!mesh) {
+						return;
+					}
+					if (modelObject.visibility) {
+						changeMeshVisibility(mesh, modelGroup.linkNames.includes(modelObject.linkName) ?  modelObject.visibility : 0);
+					}
+				});
+				Object.entries(meshStartingPropsObject).forEach(([, value]) => {
+					const mesh = scene.getNodeByName(value.linkName);
+					if (!mesh) {
+						return;
+					}
+
+					if (value.visibility) {
+						changeMeshVisibility(mesh, modelGroup.linkNames.includes(value.linkName) ?  value.visibility : 0);
+					}
+				});
 			}
-			startingLoadingModels.forEach(modelObject => {
-				const mesh = scene.getNodeByName(modelObject.linkName);
-				if (!mesh) {
-					return;
-				}
-				if (modelObject.visibility) {
-					changeMeshVisibility(mesh, modelObject.visibility);
-				}
-			});
-			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
-				const mesh = scene.getNodeByName(value.linkName);
-				if (!mesh) {
-					return;
-				}
-
-				if (value.visibility) {
-					changeMeshVisibility(mesh, value.visibility);
-				}
-			});
-
 			if (babylonProjectStates.camera && startingCameraProps) {
 				setCameraProps({
 					target: startingCameraProps.target.clone(),
@@ -393,7 +425,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 
 			setSelectedSkill('');
 		}
-	}, [selectedSkill]);
+	}, [selectedSkill, babylonProjectStates]);
 
 	useEffect(() => {
 		if (selectedProgramm !== '') {
@@ -479,7 +511,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				startingTooltips,
 				startingLoadingModels,
 				startingCameraProps,
-				setCameraProps
+				setCameraProps,
+				modelGroups
 			}}
 		>
 			{children}
