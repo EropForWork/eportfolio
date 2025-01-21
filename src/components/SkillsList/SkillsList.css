@@ -3,7 +3,7 @@
 	height: 100%;
 	background-color: var(--secondary-bg);
 	border-radius: 15px;
-	padding: 20px;
+	padding: 20px 0 20px 20px;
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
