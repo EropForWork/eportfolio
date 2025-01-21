@@ -459,6 +459,19 @@ export async function createModels(
 			linkName: meshStartingPropsObject[key].linkName
 		};
 		mesh.name = meshStartingPropsObject[key].linkName;
+
+		// const textureName = meshStartingPropsObject[key].textureName;
+		// const material = (mesh as AbstractMesh).material;
+		// if (textureName && material && scene) {
+		// 	if (material instanceof PBRMaterial) {
+		// 		const texture = new Texture(textureName, scene);
+		// 		material.albedoTexture = texture;
+		// 	} else if (material instanceof StandardMaterial) {
+		// 		const texture = new Texture(textureName, scene);
+		// 		material.diffuseTexture = texture;
+		// 	}
+		// }
+
 		mesh.getChildMeshes().forEach(
 			mesh =>
 				((mesh.metadata as MeshMetadataI) = {

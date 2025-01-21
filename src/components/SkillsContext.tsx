@@ -59,6 +59,7 @@ export interface meshStartingProps {
 	visibility?: number;
 	cameraProps?: CameraPropsI;
 	linkGroupName?: string;
+	textureName?: string;
 }
 
 export interface babylonProjectStatesI {
@@ -174,7 +175,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		'html',
 		'logos',
 		'react',
-		'git'
+		'git',
+		'vscode',
+		'as3'
 	]);
 
 	const [meshStartingPropsObject] = useState<{
@@ -189,7 +192,11 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				beta: Tools.ToRadians(85),
 				radius: 6
 			}
-		}
+		},
+		// 'Mesh_Mesh_head_geo.001_lambert2SG.001': {
+		// 	linkName: 'as3',
+		// 	textureName: './textures/TINKERCAD_baseColor.png'
+		// }
 	});
 
 	const [startingTooltips] = useState<MeshTooltip[]>([
@@ -212,6 +219,12 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			text: 'JavaScript Model Tooltip'
 		},
 		{
+			linkName: 'as3',
+			linkTextProgramm: 'as3',
+			positionMeshName: 'as3',
+			text: 'as3 Model Tooltip'
+		},
+		{
 			linkName: 'html',
 			linkTextProgramm: 'html',
 			positionMeshName: 'Plane.002_five_0',
@@ -222,7 +235,19 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			linkTextProgramm: 'git',
 			positionMeshName: 'git',
 			text: 'GIT Model Tooltip'
-		}
+		},
+		{
+			linkName: 'vscode',
+			linkTextProgramm: 'vscode',
+			positionMeshName: 'vscode',
+			text: 'VScode Model Tooltip'
+		},
+		// {
+		// 	linkName: 'photoshop',
+		// 	linkTextProgramm: 'photoshop',
+		// 	positionMeshName: 'photoshop',
+		// 	text: 'Photoshop Model Tooltip'
+		// }
 	]);
 
 	const [startingLoadingModels] = useState<loadingModelProps[]>([
@@ -295,12 +320,54 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				beta: Tools.ToRadians(85),
 				radius: 5
 			}
+		},
+		{
+			modelName: 'vscode.gltf',
+			linkName: 'vscode',
+			position: new Vector3(0, 2, 0),
+			rotation: new Vector3(0, Tools.ToRadians(90), 0),
+			scaling: new Vector3(0.4, 0.4, 0.4),
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(1.9, 1.7, 0),
+				alpha: Tools.ToRadians(180),
+				beta: Tools.ToRadians(85),
+				radius: 5
+			}
+		},
+		// {
+		// 	modelName: 'photoshop.gltf',
+		// 	linkName: 'photoshop',
+		// 	position: new Vector3(0, 2, 0),
+		// 	rotation: new Vector3(0, Tools.ToRadians(90), 0),
+		// 	scaling: new Vector3(0.002, 0.002, 0.002),
+		// 	visibility: 1,
+		// 	cameraProps: {
+		// 		target: new Vector3(1.9, 1.7, 0),
+		// 		alpha: Tools.ToRadians(180),
+		// 		beta: Tools.ToRadians(85),
+		// 		radius: 6
+		// 	}
+		// },
+		{
+			modelName: 'as3.gltf',
+			linkName: 'as3',
+			position: new Vector3(0, 0.8, 1),
+			rotation: new Vector3(0, Tools.ToRadians(90), 0),
+			scaling: new Vector3(0.03, 0.03, 0.03),
+			visibility: 1,
+			cameraProps: {
+				target: new Vector3(1.8, 1.1, 1),
+				alpha: Tools.ToRadians(180),
+				beta: Tools.ToRadians(85),
+				radius: 6
+			}
 		}
 	]);
 
 	const [modelGroups] = useState<ModelGroupsI>({
 		programming: {
-			linkNames: ['css', 'html', 'react', 'js', 'logos'],
+			linkNames: ['css', 'html', 'react', 'js', 'logos', 'as3'],
 			models: []
 		},
 		versionControl: { linkNames: ['git'], models: [] },
@@ -324,7 +391,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				{ name: 'CSS', icon: <FaCss3Alt />, level: 75, linkName: 'css' },
 				{ name: 'JavaScript', icon: <FaJs />, level: 95, linkName: 'js' },
 				{ name: 'React', icon: <FaReact />, level: 60, linkName: 'react' },
-				{ name: 'AS3', icon: <SiAsciidoctor />, level: 95 }
+				{ name: 'AS3', icon: <SiAsciidoctor />, level: 95, linkName: 'as3' }
 			],
 			skillLinkName: 'programming'
 		},
@@ -338,7 +405,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			text: 'Инструменты разработки',
 			icon: <MdBuild />,
 			items: [
-				{ name: 'Visual Studio Code', icon: <FaLaptopCode />, level: 95 },
+				{ name: 'Visual Studio Code', icon: <FaLaptopCode />, level: 95, linkName: 'vscode' },
 				{ name: 'Sublime Text', icon: <FaLaptopCode />, level: 95 }
 			],
 			skillLinkName: 'programmingTools'
