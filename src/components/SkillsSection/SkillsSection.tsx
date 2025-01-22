@@ -9,7 +9,6 @@ const SkillsSection: React.FC = () => {
 		<SkillsProvider>
 			<div className="skills-section">
 				<SkillsAvatar />
-				{/* <div style={{ width: '49%' }}></div> */}
 				<SkillsList />
 			</div>
 		</SkillsProvider>

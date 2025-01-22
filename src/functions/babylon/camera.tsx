@@ -55,7 +55,7 @@ export const moveCamera = (
 		);
 
 		const keyFramesTarget = [
-			{ frame: 0, value: camera.target.clone() },
+			{ frame: 0, value: camera.target },
 			{ frame: (duration / 1000) * 60, value: target }
 		];
 		targetAnimation.setKeys(keyFramesTarget);

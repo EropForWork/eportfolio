@@ -302,9 +302,9 @@ export function triggerMouseMeshLogic(
 			Animation.ANIMATIONLOOPMODE_CONSTANT
 		);
 		animation.setKeys([
-			{ frame: 0, value: mesh.scaling.clone() },
+			{ frame: 0, value: mesh.scaling },
 			{ frame: 30, value: mesh.scaling.scale(0.9) },
-			{ frame: 60, value: mesh.scaling.clone() }
+			{ frame: 60, value: mesh.scaling }
 		]);
 
 		const easing = new BABYLON.QuadraticEase();
