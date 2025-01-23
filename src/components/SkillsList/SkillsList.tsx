@@ -12,7 +12,8 @@ const SkillsList = () => {
 		hardSkills,
 		softSkills,
 		startingTooltips,
-		babylonProjectStates
+		babylonProjectStates,
+		loadedNodes
 	} = useSkillsContext();
 	const { scene } = babylonProjectStates;
 	const handleSkillClick = (skill: string) => {
@@ -26,13 +27,23 @@ const SkillsList = () => {
 			return;
 		}
 
-		revialTooltip(scene, programm.toLocaleLowerCase(), startingTooltips);
+		revialTooltip(
+			scene,
+			programm.toLocaleLowerCase(),
+			startingTooltips,
+			loadedNodes
+		);
 	};
 	const handleProgrammOut = (programm: string) => {
 		if (!scene) {
 			return;
 		}
-		hideTooltip(scene, programm.toLocaleLowerCase(), startingTooltips);
+		hideTooltip(
+			scene,
+			programm.toLocaleLowerCase(),
+			startingTooltips,
+			loadedNodes
+		);
 	};
 
 	return (

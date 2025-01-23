@@ -6,9 +6,11 @@ import {
 	DirectionalLight,
 	Engine,
 	Mesh,
+	Node,
 	Scene,
 	ShadowGenerator,
 	Tools,
+	TransformNode,
 	Vector3
 } from 'babylonjs';
 import React, {
@@ -106,6 +108,13 @@ export interface MeshTooltip {
 	};
 }
 
+export type LoadedNodesType = Record<
+	string,
+	{
+		node: Node | AbstractMesh | Mesh | TransformNode;
+	}
+>;
+
 interface SkillItemI {
 	name: string;
 	icon: ReactNode;
@@ -135,6 +144,13 @@ interface SkillsContextType {
 	meshStartingPropsObject: {
 		[key: string]: meshStartingProps;
 	};
+	loadedNodes: LoadedNodesType;
+	addNode: (
+		key: string,
+		value: {
+			node: Node | AbstractMesh | Mesh | TransformNode;
+		}
+	) => void;
 	startingTooltips: MeshTooltip[];
 	startingLoadingModels: loadingModelProps[];
 	startingCameraProps: CameraPropsI;
@@ -466,6 +482,16 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		() => hardSkills.flatMap(skill => skill.items),
 		[hardSkills]
 	);
+	const [loadedNodes, setLoadedNodes] = useState<
+		Record<string, { node: Node | AbstractMesh | Mesh | TransformNode }>
+	>({});
+
+	const addNode = (
+		key: string,
+		value: { node: Node | AbstractMesh | Mesh | TransformNode }
+	) => {
+		setLoadedNodes(prev => ({ ...prev, [key]: value }));
+	};
 
 	useEffect(() => {
 		if (cameraProps && babylonProjectStates.camera) {
@@ -486,8 +512,10 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				if (!scene) {
 					return;
 				}
+
 				startingLoadingModels.forEach(modelObject => {
-					const mesh = scene.getNodeByName(modelObject.linkName);
+					// const mesh = scene.getNodeByName(modelObject.linkName);
+					const mesh = loadedNodes[modelObject.linkName]?.node;
 					if (!mesh) {
 						return;
 					}
@@ -501,7 +529,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					}
 				});
 				Object.entries(meshStartingPropsObject).forEach(([, value]) => {
-					const mesh = scene.getNodeByName(value.linkName);
+					// const mesh = scene.getNodeByName(value.linkName);
+					const mesh = loadedNodes[value.linkName]?.node;
 					if (!mesh) {
 						return;
 					}
@@ -540,12 +569,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!scene) {
 				return;
 			}
-			const mesh = scene.getNodeByName(meshName);
+			// const mesh = scene.getNodeByName(meshName);
+			const mesh = loadedNodes[meshName]?.node;
 			if (!mesh) {
 				return;
 			}
 			startingLoadingModels.forEach(modelObject => {
-				const mesh = scene.getNodeByName(modelObject.linkName);
+				const mesh = loadedNodes[modelObject.linkName]?.node;
+				// const mesh = scene.getNodeByName(modelObject.linkName);
 				if (!mesh) {
 					return;
 				}
@@ -566,7 +597,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 			});
 			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
-				const mesh = scene.getNodeByName(value.linkName);
+				const mesh = loadedNodes[value.linkName]?.node;
+				// const mesh = scene.getNodeByName(value.linkName);
 				if (!mesh) {
 					return;
 				}
@@ -605,6 +637,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			setSelectedProgramm,
 			loadingAnimationModelsNames,
 			meshStartingPropsObject,
+			loadedNodes,
+			addNode,
 			startingTooltips,
 			startingLoadingModels,
 			startingCameraProps,
@@ -618,7 +652,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			setSelectedProgramm,
 			babylonProjectStates,
 			setBabylonProjectStates,
-			setCameraProps
+			setCameraProps,
+			loadedNodes,
+			addNode
 		]
 	);
 

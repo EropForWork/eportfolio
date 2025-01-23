@@ -25,6 +25,7 @@ import * as GUI from 'babylonjs-gui';
 import { animateValue, randomNumber } from './common';
 import {
 	babylonProjectStatesI,
+	LoadedNodesType,
 	loadingModelProps,
 	meshStartingProps,
 	MeshTooltip
@@ -74,6 +75,7 @@ export const changeMeshVisibility = (
 	if (node instanceof AbstractMesh) {
 		if (duration === 0) {
 			node.visibility = visibility;
+			node.isPickable = visibility !== 0;
 		} else {
 			const easingFunction = new QuadraticEase();
 			easingFunction.setEasingMode(EasingFunction.EASINGMODE_EASEINOUT);
@@ -96,8 +98,7 @@ export const changeMeshVisibility = (
 
 			animationGroup.addTargetedAnimation(visibilityAnimation, node);
 
-			const isVisible = visibility !== 0;
-			node.isPickable = isVisible;
+			node.isPickable = visibility !== 0;
 			animationGroup.onAnimationGroupEndObservable.add(() => {
 				animationGroup.dispose();
 			});
@@ -114,7 +115,13 @@ export const changeMeshVisibility = (
 export const loadModels = async (
 	startingModels: loadingModelProps[],
 	scene: Scene,
-	modelGroups: ModelGroupsI
+	modelGroups: ModelGroupsI,
+	addNode: (
+		key: string,
+		value: {
+			node: Node | AbstractMesh | Mesh | TransformNode;
+		}
+	) => void
 ): Promise<AbstractMesh[]> => {
 	const loadedModels = await Promise.all(
 		startingModels.map(async startingModel => {
@@ -128,26 +135,31 @@ export const loadModels = async (
 				const mainMesh = model.meshes[0];
 				mainMesh.name = startingModel.linkName;
 				mainMesh.rotation = new Vector3(0, 0, 0);
+				addNode(mainMesh.name, { node: mainMesh });
 
-				await Promise.all(
-					model.meshes.map(mesh => {
-						const meshMetadata: MeshMetadataI = {
-							visibility: startingModel.visibility ? startingModel.visibility : 1,
-							mainParent: mainMesh,
-							mainParentName: mainMesh.name.toLocaleLowerCase(),
-							linkName: startingModel.linkName,
-							linkGroupName:
-								Object.entries(modelGroups).find(([, group]) =>
-									group.linkNames.includes(startingModel.linkName)
-								)?.[0] || 'common'
-						};
-						mesh.metadata = meshMetadata;
-						mesh.material
-							?.getActiveTextures()
-							.map(texture => texture?.readPixels?.());
-						mesh.overlayAlpha = 0;
-					})
-				);
+				model.transformNodes.forEach(transformNode => {
+					addNode(transformNode.name, { node: transformNode });
+				});
+
+				model.meshes.forEach(mesh => {
+					addNode(mesh.name, { node: mesh });
+
+					const meshMetadata: MeshMetadataI = {
+						visibility: startingModel.visibility ? startingModel.visibility : 1,
+						mainParent: mainMesh,
+						mainParentName: mainMesh.name.toLocaleLowerCase(),
+						linkName: startingModel.linkName,
+						linkGroupName:
+							Object.entries(modelGroups).find(([, group]) =>
+								group.linkNames.includes(startingModel.linkName)
+							)?.[0] || 'common'
+					};
+					mesh.metadata = meshMetadata;
+					mesh.material
+						?.getActiveTextures()
+						?.forEach(texture => texture?.readPixels?.());
+					mesh.overlayAlpha = 0;
+				});
 
 				if (startingModel.position) {
 					mainMesh.position = startingModel.position;
@@ -222,7 +234,8 @@ export const meshLookAtCamera = (mesh: Node): void => {
 export function triggerMouseMeshLogic(
 	type: string,
 	e: ActionEvent,
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType
 ) {
 	const mesh = e.meshUnderPointer;
 	const scene = e.meshUnderPointer?.getScene();
@@ -230,7 +243,7 @@ export function triggerMouseMeshLogic(
 		return;
 	}
 	if (type === 'OnPointerOverTrigger') {
-		revialTooltip(scene, mesh.metadata.linkName, startingTooltips);
+		revialTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -242,12 +255,13 @@ export function triggerMouseMeshLogic(
 		) {
 			stopCycleAnimation(
 				e.meshUnderPointer?.getScene(),
-				e.meshUnderPointer?.metadata.mainParentName
+				e.meshUnderPointer?.metadata.mainParentName,
+				loadedNodes
 			);
 		}
 	}
 	if (type === 'OnPointerOutTrigger') {
-		hideTooltip(scene, mesh.metadata.linkName, startingTooltips);
+		hideTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
 		const rootStyles = getComputedStyle(document.documentElement);
 		const color3 =
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
@@ -259,7 +273,8 @@ export function triggerMouseMeshLogic(
 		) {
 			resumeCycleAnimation(
 				e.meshUnderPointer?.getScene(),
-				e.meshUnderPointer?.metadata.mainParentName
+				e.meshUnderPointer?.metadata.mainParentName,
+				loadedNodes
 			);
 		}
 	}
@@ -330,10 +345,10 @@ export async function createScene(
 	const sceneMetadata: SceneMetadataI = {};
 	scene.metadata = sceneMetadata;
 	if (scene.isReady()) {
-		// scene.debugLayer.show({
-		// 	handleResize: false,
-		// 	overlay: true
-		// });
+		scene.debugLayer.show({
+			handleResize: false,
+			overlay: true
+		});
 		setBabylonProjectStates(prevState => ({
 			...prevState,
 			scene: scene
@@ -389,15 +404,23 @@ export async function createModels(
 		[key: string]: meshStartingProps;
 	},
 	startingTooltips: MeshTooltip[],
-	modelGroups: ModelGroupsI
+	modelGroups: ModelGroupsI,
+	addNode: (
+		key: string,
+		value: {
+			node: Node | AbstractMesh | Mesh | TransformNode;
+		}
+	) => void,
+	loadedNodes: LoadedNodesType
 ) {
 	const modelsArray = await loadModels(
 		startingLoadingModels,
 		scene,
-		modelGroups
+		modelGroups,
+		addNode
 	);
 
-	createMeshTooltips(modelsArray, scene, startingTooltips);
+	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
 	modelsArray.forEach(model => {
 		if (model) {
@@ -410,12 +433,14 @@ export async function createModels(
 					'OnPickDownTrigger',
 					'OnPickUpTrigger'
 				],
-				startingTooltips
+				startingTooltips,
+				loadedNodes
 			);
 		}
 	});
 
 	loadingAnimationModelsNames.forEach(modelName => {
+		// const mesh = loadedNodes[modelName]?.node;
 		const mesh = scene.getNodeByName(modelName);
 		if (mesh) {
 			const randomAmplitudePosition = randomNumber(-0.5, 0.5);
@@ -440,6 +465,7 @@ export async function createModels(
 
 	const followCameraMeshes: string[] = ['react'];
 	followCameraMeshes.forEach(modelName => {
+		// const mesh = loadedNodes[modelName]?.node;
 		const mesh = scene.getNodeByName(modelName);
 		if (mesh) {
 			meshLookAtCamera(mesh);
@@ -447,6 +473,7 @@ export async function createModels(
 	});
 
 	for (const key in meshStartingPropsObject) {
+		// const mesh = loadedNodes[key]?.node;
 		const mesh = scene.getNodeByName(key);
 		if (!mesh) {
 			return;
@@ -459,6 +486,7 @@ export async function createModels(
 			linkName: meshStartingPropsObject[key].linkName
 		};
 		mesh.name = meshStartingPropsObject[key].linkName;
+		addNode(mesh.name, { node: mesh });
 
 		// const textureName = meshStartingPropsObject[key].textureName;
 		// const material = (mesh as AbstractMesh).material;
@@ -494,13 +522,15 @@ export async function createModels(
 function createMeshTooltips(
 	modelsArray: AbstractMesh[],
 	scene: Scene,
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType
 ) {
 	if (modelsArray.length > 0 && startingTooltips.length > 0) {
 		const advancedTexture = GUI.AdvancedDynamicTexture.CreateFullscreenUI('UI');
 		scene.metadata.gui = advancedTexture;
 
 		startingTooltips.map(tooltipObject => {
+			// const model = loadedNodes[tooltipObject.positionMeshName]?.node;
 			const model = scene.getNodeByName(tooltipObject.positionMeshName);
 			if (model) {
 				createMeshTooltip(model as AbstractMesh, tooltipObject, advancedTexture);
@@ -570,10 +600,12 @@ export function startRenderScene(
 		state: 'running'
 	}));
 }
+
 function addActionManagerToMesh(
 	model: AbstractMesh,
 	actionManagerTypes: string[],
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType
 ) {
 	const scene = model.getScene();
 	if (!scene) {
@@ -588,7 +620,7 @@ function addActionManagerToMesh(
 				const actionType = ActionManager[type as keyof typeof ActionManager];
 				mesh.actionManager!.registerAction(
 					new ExecuteCodeAction(actionType, e => {
-						triggerMouseMeshLogic(type, e, startingTooltips);
+						triggerMouseMeshLogic(type, e, startingTooltips, loadedNodes);
 					})
 				);
 			} else {
@@ -699,7 +731,12 @@ function getTextWidth(text: string, font: string) {
 	return Math.ceil(width);
 }
 
-function stopCycleAnimation(scene: Scene, meshName: string) {
+function stopCycleAnimation(
+	scene: Scene,
+	meshName: string,
+	loadedNodes: LoadedNodesType
+) {
+	// const mesh = loadedNodes[meshName]?.node;
 	const mesh = scene.getNodeByName(meshName);
 	if (mesh && mesh.animations) {
 		const activeAnimation = scene._activeAnimatables.find(anim =>
@@ -717,7 +754,12 @@ function stopCycleAnimation(scene: Scene, meshName: string) {
 		}
 	}
 }
-function resumeCycleAnimation(scene: Scene, meshName: string) {
+function resumeCycleAnimation(
+	scene: Scene,
+	meshName: string,
+	loadedNodes: LoadedNodesType
+) {
+	// const mesh = loadedNodes[meshName]?.node;
 	const mesh = scene.getNodeByName(meshName);
 	if (mesh && mesh.animations) {
 		const { cycleAnimation } = mesh.metadata || {};
@@ -738,7 +780,8 @@ function hexToColor3(hex: string): Color3 {
 export function revialTooltip(
 	scene: Scene,
 	linkName: string,
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType
 ) {
 	if (scene && linkName) {
 		const tooltip = startingTooltips.find(
@@ -747,6 +790,7 @@ export function revialTooltip(
 		if (tooltip) {
 			tooltip.methods?.revial?.();
 
+			// const model = loadedNodes[tooltip.linkName]?.node;
 			const model = scene.getNodeByName(tooltip.linkName);
 			if (!model) {
 				return;
@@ -765,7 +809,8 @@ export function revialTooltip(
 export function hideTooltip(
 	scene: Scene,
 	linkName: string,
-	startingTooltips: MeshTooltip[]
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType
 ) {
 	if (scene && linkName) {
 		const tooltip = startingTooltips.find(
@@ -773,6 +818,7 @@ export function hideTooltip(
 		);
 		if (tooltip) {
 			tooltip.methods?.hide?.();
+			// const model = loadedNodes[tooltip.linkName]?.node;
 			const model = scene.getNodeByName(tooltip.linkName);
 
 			if (model && model.metadata.realVisibility !== undefined) {
