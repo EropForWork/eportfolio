@@ -629,10 +629,12 @@ function createMeshTooltip(
 	tooltipObject: MeshTooltip,
 	advancedTexture: GUI.AdvancedDynamicTexture
 ) {
+	const scene = mesh.getScene();
+	const camera = scene.activeCamera;
 	const modelTooltip = new GUI.Container(tooltipObject.linkName + '_tooltip');
 	advancedTexture.addControl(modelTooltip);
 	modelTooltip.linkWithMesh(mesh);
-	modelTooltip.linkOffsetY = -150;
+
 	const rootStyles = getComputedStyle(document.documentElement);
 	const fontFamily = rootStyles.getPropertyValue('--font-family') || 'Arial';
 
@@ -664,6 +666,18 @@ function createMeshTooltip(
 	};
 
 	setVisibleCurrentGUI(tooltipObject.linkName, 0, mesh.getScene(), 0);
+
+	const constantDistance = 1;
+
+	scene.onBeforeRenderObservable.add(() => {
+		if (camera && mesh) {
+			const distance = Vector3.Distance(camera.position, mesh.position);
+			const pixelOffset =
+				(constantDistance / distance) * scene.getEngine().getRenderHeight();
+
+			modelTooltip.linkOffsetY = -pixelOffset;
+		}
+	});
 }
 
 export function setVisibleCurrentGUI(
