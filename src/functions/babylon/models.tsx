@@ -24,14 +24,16 @@ import * as GUI from 'babylonjs-gui';
 import { animateValue, randomNumber } from './common';
 import {
 	babylonProjectStatesI,
+	GraphicsModelsT,
 	LoadedNodesType,
 	loadingModelProps,
 	meshStartingProps,
 	MeshTooltip
 } from '../../components/SkillsContext';
 import { CameraPropsI, createCamera } from './camera';
+import { createGraphicModels } from './graphicsModel';
 
-interface MeshMetadataI {
+export interface MeshMetadataI {
 	visibility: number;
 	mainParent?: Node | AbstractMesh | Mesh;
 	mainParentName?: string;
@@ -61,17 +63,22 @@ export interface ModelGroupsI {
 
 export const changeMeshVisibility = (
 	node: Node,
-	visibility: number,
+	propVisibility: number,
 	saveVisibility: boolean = true,
 	duration: number = 300
 ): void => {
+	const visibility = node.name.includes('redSphere_')
+		? propVisibility === 1
+			? 0.1
+			: propVisibility
+		: propVisibility;
+
 	(node.metadata as MeshMetadataI) = {
 		...node.metadata,
 		realVisibility: saveVisibility ? undefined : node.metadata.visibility,
 		visibility: visibility
 	};
-
-	if (node instanceof AbstractMesh) {
+	if (node instanceof AbstractMesh || node instanceof Mesh) {
 		if (duration === 0) {
 			node.visibility = visibility;
 			node.isPickable = visibility !== 0;
@@ -373,7 +380,8 @@ export async function loadUserModels(
 	modelGroups: ModelGroupsI,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
-	>
+	>,
+	graphicModelsNames: GraphicsModelsT
 ) {
 	const modelsArray = await loadModels(
 		startingLoadingModels,
@@ -381,10 +389,18 @@ export async function loadUserModels(
 		modelGroups
 	);
 
+	const graphicModels = await createGraphicModels(
+		graphicModelsNames,
+		scene,
+		modelGroups
+	);
+
+	const modifiedModelsArray = modelsArray.concat(graphicModels);
+
 	setBabylonProjectStates(prevState => ({
 		...prevState,
 		state: 'loaded',
-		models: modelsArray
+		models: modifiedModelsArray
 	}));
 }
 
@@ -406,15 +422,16 @@ export async function processingUserModels(
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>,
-	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>,
+	registerActionsModelsNames: string[]
 ) {
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
-	modelsArray.forEach(model => {
-		if (model) {
-			changeMeshVisibility(model, 0, true, 0);
+	registerActionsModelsNames.forEach(modelName => {
+		const mesh = loadedNodes[modelName]?.node;
+		if (mesh) {
 			addActionManagerToMesh(
-				model,
+				mesh as AbstractMesh,
 				[
 					'OnPointerOverTrigger',
 					'OnPointerOutTrigger',
@@ -426,6 +443,10 @@ export async function processingUserModels(
 				setOveredMesh
 			);
 		}
+	});
+
+	modelsArray.forEach(model => {
+		changeMeshVisibility(model, 0, true, 0);
 	});
 
 	loadingAnimationModelsNames.forEach(modelName => {

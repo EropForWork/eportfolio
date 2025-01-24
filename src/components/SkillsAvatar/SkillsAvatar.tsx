@@ -29,7 +29,9 @@ function SkillsAvatar() {
 		addNode,
 		loadedNodes,
 		overedMesh,
-		setOveredMesh
+		setOveredMesh,
+		graphicModelsNames,
+		registerActionsModelsNames
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
@@ -62,7 +64,8 @@ function SkillsAvatar() {
 					startingLoadingModels,
 					scene,
 					modelGroups,
-					setBabylonProjectStates
+					setBabylonProjectStates,
+					graphicModelsNames
 				).finally(() => {
 					scene.getNodes().forEach(node => {
 						addNode(node.name, { node: node });
@@ -82,7 +85,8 @@ function SkillsAvatar() {
 				meshStartingPropsObject,
 				addNode,
 				setBabylonProjectStates,
-				setOveredMesh
+				setOveredMesh,
+				registerActionsModelsNames
 			),
 		processed: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),

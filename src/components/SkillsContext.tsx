@@ -115,6 +115,14 @@ export type LoadedNodesType = Record<
 		node: Node | AbstractMesh | Mesh | TransformNode;
 	}
 >;
+export type GraphicsModelsT = Record<
+	string,
+	{
+		position: Vector3;
+		rotation: Vector3;
+		boxSize: { width: number; height: number; depth: number };
+	}
+>;
 
 interface SkillItemI {
 	name: string;
@@ -159,6 +167,8 @@ interface SkillsContextType {
 	modelGroups: ModelGroupsI;
 	overedMesh: AbstractMesh | null;
 	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>;
+	graphicModelsNames: GraphicsModelsT;
+	registerActionsModelsNames: string[];
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
@@ -198,6 +208,23 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 
 	const loadingAnimationModelsNames = useMemo<string[]>(
 		() => ['css', 'html', 'logos', 'react', 'git', 'vscode', 'as3'],
+		[]
+	);
+
+	const registerActionsModelsNames = useMemo<string[]>(
+		() => ['css', 'html', 'logos', 'react', 'git', 'vscode', 'as3'],
+		[]
+	);
+
+	const graphicModelsNames = useMemo<GraphicsModelsT>(
+		() => ({
+			vectorDesk: {
+				model: null,
+				position: new Vector3(0, 2.5, 0),
+				rotation: new Vector3(0, 0, Tools.ToRadians(350)),
+				boxSize: { width: 0.1, height: 3, depth: 4 }
+			}
+		}),
 		[]
 	);
 
@@ -383,7 +410,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				models: []
 			},
 			graphicTools: {
-				linkNames: ['photoshop', 'illustrator', 'coreldraw', 'figma'],
+				linkNames: ['vectorDesk'],
 				models: []
 			},
 			neuro: { linkNames: ['neuro'], models: [] }
@@ -534,6 +561,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 						);
 					}
 				});
+
+				Object.entries(graphicModelsNames).forEach(([name]) => {
+					const mesh = loadedNodes[name]?.node;
+					if (!mesh) {
+						return;
+					}
+					changeMeshVisibility(mesh, modelGroup.linkNames.includes(name) ? 1 : 0);
+				});
 			}
 			if (babylonProjectStates.camera && startingCameraProps) {
 				setCameraProps({
@@ -634,7 +669,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			setCameraProps,
 			modelGroups,
 			overedMesh,
-			setOveredMesh
+			setOveredMesh,
+			graphicModelsNames,
+			registerActionsModelsNames
 		}),
 		[
 			selectedSkill,
