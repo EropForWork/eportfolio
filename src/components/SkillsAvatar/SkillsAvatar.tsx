@@ -9,7 +9,8 @@ import {
 	createShadows,
 	loadUserModels,
 	processingUserModels,
-	startRenderScene
+	startRenderScene,
+	triggerMouseMeshLogic
 } from '../../functions/babylon/models';
 
 function SkillsAvatar() {
@@ -26,19 +27,24 @@ function SkillsAvatar() {
 		setCameraProps,
 		modelGroups,
 		addNode,
-		loadedNodes
+		loadedNodes,
+		overedMesh,
+		setOveredMesh
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
 
 	const leaveCanvas = useCallback(() => {
-		if (startingTooltips.length > 0) {
-			startingTooltips.forEach(tooltip => {
-				tooltip.methods?.hide?.();
-				// TODO запустить уход с меша
-			});
+		if (overedMesh) {
+			triggerMouseMeshLogic(
+				'OnPointerOutTrigger',
+				overedMesh,
+				startingTooltips,
+				loadedNodes,
+				setOveredMesh
+			);
 		}
-	}, []);
+	}, [overedMesh]);
 
 	const createBabylonjsActions: Record<string, () => void> = {
 		idle: () => {
@@ -75,7 +81,8 @@ function SkillsAvatar() {
 				loadingAnimationModelsNames,
 				meshStartingPropsObject,
 				addNode,
-				setBabylonProjectStates
+				setBabylonProjectStates,
+				setOveredMesh
 			),
 		processed: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),

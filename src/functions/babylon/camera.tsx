@@ -120,7 +120,7 @@ export const moveCamera = (
 	animationGroup.onAnimationGroupEndObservable.add(() => {
 		animationGroup.dispose();
 	});
-
+	// TODO Включить перед продом
 	// animationGroup.start(true);
 	animationGroup.start(false);
 };

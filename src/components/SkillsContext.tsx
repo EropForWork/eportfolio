@@ -157,6 +157,8 @@ interface SkillsContextType {
 	startingCameraProps: CameraPropsI;
 	setCameraProps: (cameraProps: CameraPropsI | null) => void;
 	modelGroups: ModelGroupsI;
+	overedMesh: AbstractMesh | null;
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
@@ -188,6 +190,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		beta: Tools.ToRadians(80),
 		radius: 6
 	});
+	const [overedMesh, setOveredMesh] = useState<AbstractMesh | null>(null);
 	const [cameraProps, setCameraPropsState] = useState<CameraPropsI | null>(null);
 	const setCameraProps = useCallback((cameraProps: CameraPropsI | null) => {
 		setCameraPropsState(cameraProps);
@@ -519,7 +522,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					}
 				});
 				Object.entries(meshStartingPropsObject).forEach(([, value]) => {
-					// const mesh = scene.getNodeByName(value.linkName);
 					const mesh = loadedNodes[value.linkName]?.node;
 					if (!mesh) {
 						return;
@@ -630,7 +632,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			startingLoadingModels,
 			startingCameraProps,
 			setCameraProps,
-			modelGroups
+			modelGroups,
+			overedMesh,
+			setOveredMesh
 		}),
 		[
 			selectedSkill,
@@ -641,7 +645,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			setBabylonProjectStates,
 			setCameraProps,
 			loadedNodes,
-			addNode
+			addNode,
+			overedMesh
 		]
 	);
 

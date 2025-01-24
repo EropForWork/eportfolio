@@ -1,6 +1,5 @@
 import {
 	AbstractMesh,
-	ActionEvent,
 	ActionManager,
 	Animatable,
 	Animation,
@@ -220,12 +219,12 @@ export const meshLookAtCamera = (mesh: Node): void => {
 
 export function triggerMouseMeshLogic(
 	type: string,
-	e: ActionEvent,
+	mesh: AbstractMesh,
 	startingTooltips: MeshTooltip[],
-	loadedNodes: LoadedNodesType
+	loadedNodes: LoadedNodesType,
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
 ) {
-	const mesh = e.meshUnderPointer;
-	const scene = e.meshUnderPointer?.getScene();
+	const scene = mesh?.getScene();
 	if (!mesh || !scene) {
 		return;
 	}
@@ -236,16 +235,10 @@ export function triggerMouseMeshLogic(
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
 			new Color3(255, 0, 0);
 		changeMeshOverlayAlpha(mesh, 0.9, 0.3, color3);
-		if (
-			e.meshUnderPointer?.getScene() &&
-			e.meshUnderPointer?.metadata.mainParentName
-		) {
-			stopCycleAnimation(
-				e.meshUnderPointer?.getScene(),
-				e.meshUnderPointer?.metadata.mainParentName,
-				loadedNodes
-			);
+		if (mesh.metadata.mainParentName) {
+			stopCycleAnimation(scene, mesh.metadata.mainParentName, loadedNodes);
 		}
+		setOveredMesh(mesh);
 	}
 	if (type === 'OnPointerOutTrigger') {
 		hideTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
@@ -254,18 +247,13 @@ export function triggerMouseMeshLogic(
 			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
 			new Color3(255, 0, 0);
 		changeMeshOverlayAlpha(mesh, 0, 0.3, color3);
-		if (
-			e.meshUnderPointer?.getScene() &&
-			e.meshUnderPointer?.metadata.mainParentName
-		) {
-			resumeCycleAnimation(
-				e.meshUnderPointer?.metadata.mainParentName,
-				loadedNodes
-			);
+		if (mesh.metadata.mainParentName) {
+			resumeCycleAnimation(mesh.metadata.mainParentName, loadedNodes);
 		}
+		setOveredMesh(null);
 	}
 	if (type === 'OnPickUpTrigger') {
-		bounceModelAnimation(e.meshUnderPointer as AbstractMesh);
+		bounceModelAnimation(mesh);
 	}
 
 	function changeMeshOverlayAlpha(
@@ -417,7 +405,8 @@ export async function processingUserModels(
 	) => void,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
-	>
+	>,
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
 ) {
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
@@ -433,7 +422,8 @@ export async function processingUserModels(
 					'OnPickUpTrigger'
 				],
 				startingTooltips,
-				loadedNodes
+				loadedNodes,
+				setOveredMesh
 			);
 		}
 	});
@@ -600,7 +590,8 @@ function addActionManagerToMesh(
 	model: AbstractMesh,
 	actionManagerTypes: string[],
 	startingTooltips: MeshTooltip[],
-	loadedNodes: LoadedNodesType
+	loadedNodes: LoadedNodesType,
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
 ) {
 	const scene = model.getScene();
 	if (!scene) {
@@ -615,7 +606,15 @@ function addActionManagerToMesh(
 				const actionType = ActionManager[type as keyof typeof ActionManager];
 				mesh.actionManager!.registerAction(
 					new ExecuteCodeAction(actionType, e => {
-						triggerMouseMeshLogic(type, e, startingTooltips, loadedNodes);
+						if (e.meshUnderPointer) {
+							triggerMouseMeshLogic(
+								type,
+								e.meshUnderPointer,
+								startingTooltips,
+								loadedNodes,
+								setOveredMesh
+							);
+						}
 					})
 				);
 			} else {
