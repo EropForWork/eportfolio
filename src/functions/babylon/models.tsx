@@ -115,13 +115,7 @@ export const changeMeshVisibility = (
 export const loadModels = async (
 	startingModels: loadingModelProps[],
 	scene: Scene,
-	modelGroups: ModelGroupsI,
-	addNode: (
-		key: string,
-		value: {
-			node: Node | AbstractMesh | Mesh | TransformNode;
-		}
-	) => void
+	modelGroups: ModelGroupsI
 ): Promise<AbstractMesh[]> => {
 	const loadedModels = await Promise.all(
 		startingModels.map(async startingModel => {
@@ -135,15 +129,8 @@ export const loadModels = async (
 				const mainMesh = model.meshes[0];
 				mainMesh.name = startingModel.linkName;
 				mainMesh.rotation = new Vector3(0, 0, 0);
-				addNode(mainMesh.name, { node: mainMesh });
-
-				model.transformNodes.forEach(transformNode => {
-					addNode(transformNode.name, { node: transformNode });
-				});
 
 				model.meshes.forEach(mesh => {
-					addNode(mesh.name, { node: mesh });
-
 					const meshMetadata: MeshMetadataI = {
 						visibility: startingModel.visibility ? startingModel.visibility : 1,
 						mainParent: mainMesh,
@@ -272,7 +259,6 @@ export function triggerMouseMeshLogic(
 			e.meshUnderPointer?.metadata.mainParentName
 		) {
 			resumeCycleAnimation(
-				e.meshUnderPointer?.getScene(),
 				e.meshUnderPointer?.metadata.mainParentName,
 				loadedNodes
 			);
@@ -393,33 +379,46 @@ export function createLight(
 	}));
 }
 
-export async function createModels(
+export async function loadUserModels(
+	startingLoadingModels: loadingModelProps[],
 	scene: Scene,
+	modelGroups: ModelGroupsI,
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
-	>,
-	startingLoadingModels: loadingModelProps[],
+	>
+) {
+	const modelsArray = await loadModels(
+		startingLoadingModels,
+		scene,
+		modelGroups
+	);
+
+	setBabylonProjectStates(prevState => ({
+		...prevState,
+		state: 'loaded',
+		models: modelsArray
+	}));
+}
+
+export async function processingUserModels(
+	scene: Scene,
+	loadedNodes: LoadedNodesType,
+	modelsArray: (Mesh | AbstractMesh)[],
+	startingTooltips: MeshTooltip[],
 	loadingAnimationModelsNames: string[],
 	meshStartingPropsObject: {
 		[key: string]: meshStartingProps;
 	},
-	startingTooltips: MeshTooltip[],
-	modelGroups: ModelGroupsI,
 	addNode: (
 		key: string,
 		value: {
 			node: Node | AbstractMesh | Mesh | TransformNode;
 		}
 	) => void,
-	loadedNodes: LoadedNodesType
+	setBabylonProjectStates: React.Dispatch<
+		React.SetStateAction<babylonProjectStatesI>
+	>
 ) {
-	const modelsArray = await loadModels(
-		startingLoadingModels,
-		scene,
-		modelGroups,
-		addNode
-	);
-
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
 	modelsArray.forEach(model => {
@@ -440,8 +439,7 @@ export async function createModels(
 	});
 
 	loadingAnimationModelsNames.forEach(modelName => {
-		// const mesh = loadedNodes[modelName]?.node;
-		const mesh = scene.getNodeByName(modelName);
+		const mesh = loadedNodes[modelName]?.node;
 		if (mesh) {
 			const randomAmplitudePosition = randomNumber(-0.5, 0.5);
 			const randomSpeedPosition = randomNumber(3, 5);
@@ -465,16 +463,14 @@ export async function createModels(
 
 	const followCameraMeshes: string[] = ['react'];
 	followCameraMeshes.forEach(modelName => {
-		// const mesh = loadedNodes[modelName]?.node;
-		const mesh = scene.getNodeByName(modelName);
+		const mesh = loadedNodes[modelName]?.node;
 		if (mesh) {
 			meshLookAtCamera(mesh);
 		}
 	});
 
 	for (const key in meshStartingPropsObject) {
-		// const mesh = loadedNodes[key]?.node;
-		const mesh = scene.getNodeByName(key);
+		const mesh = loadedNodes[key]?.node;
 		if (!mesh) {
 			return;
 		}
@@ -514,7 +510,7 @@ export async function createModels(
 
 	setBabylonProjectStates(prevState => ({
 		...prevState,
-		state: 'loaded',
+		state: 'processed',
 		models: modelsArray
 	}));
 }
@@ -530,8 +526,7 @@ function createMeshTooltips(
 		scene.metadata.gui = advancedTexture;
 
 		startingTooltips.map(tooltipObject => {
-			// const model = loadedNodes[tooltipObject.positionMeshName]?.node;
-			const model = scene.getNodeByName(tooltipObject.positionMeshName);
+			const model = loadedNodes[tooltipObject.positionMeshName]?.node;
 			if (model) {
 				createMeshTooltip(model as AbstractMesh, tooltipObject, advancedTexture);
 			}
@@ -736,8 +731,7 @@ function stopCycleAnimation(
 	meshName: string,
 	loadedNodes: LoadedNodesType
 ) {
-	// const mesh = loadedNodes[meshName]?.node;
-	const mesh = scene.getNodeByName(meshName);
+	const mesh = loadedNodes[meshName]?.node;
 	if (mesh && mesh.animations) {
 		const activeAnimation = scene._activeAnimatables.find(anim =>
 			anim._runtimeAnimations.some(
@@ -754,13 +748,8 @@ function stopCycleAnimation(
 		}
 	}
 }
-function resumeCycleAnimation(
-	scene: Scene,
-	meshName: string,
-	loadedNodes: LoadedNodesType
-) {
-	// const mesh = loadedNodes[meshName]?.node;
-	const mesh = scene.getNodeByName(meshName);
+function resumeCycleAnimation(meshName: string, loadedNodes: LoadedNodesType) {
+	const mesh = loadedNodes[meshName]?.node;
 	if (mesh && mesh.animations) {
 		const { cycleAnimation } = mesh.metadata || {};
 		if (cycleAnimation !== undefined) {
@@ -790,8 +779,7 @@ export function revialTooltip(
 		if (tooltip) {
 			tooltip.methods?.revial?.();
 
-			// const model = loadedNodes[tooltip.linkName]?.node;
-			const model = scene.getNodeByName(tooltip.linkName);
+			const model = loadedNodes[tooltip.linkName]?.node;
 			if (!model) {
 				return;
 			}
@@ -818,8 +806,7 @@ export function hideTooltip(
 		);
 		if (tooltip) {
 			tooltip.methods?.hide?.();
-			// const model = loadedNodes[tooltip.linkName]?.node;
-			const model = scene.getNodeByName(tooltip.linkName);
+			const model = loadedNodes[tooltip.linkName]?.node;
 
 			if (model && model.metadata.realVisibility !== undefined) {
 				changeMeshVisibility(model, model.metadata.realVisibility);

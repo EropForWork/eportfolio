@@ -1,13 +1,14 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSkillsContext } from '../SkillsContext';
 import 'babylonjs-loaders';
 import './SkillsAvatar.css';
 import {
 	createEngine,
 	createLight,
-	createModels,
 	createScene,
 	createShadows,
+	loadUserModels,
+	processingUserModels,
 	startRenderScene
 } from '../../functions/babylon/models';
 
@@ -30,13 +31,14 @@ function SkillsAvatar() {
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
 
-	function leaveCanvas() {
+	const leaveCanvas = useCallback(() => {
 		if (startingTooltips.length > 0) {
 			startingTooltips.forEach(tooltip => {
 				tooltip.methods?.hide?.();
+				// TODO запустить уход с меша
 			});
 		}
-	}
+	}, []);
 
 	const createBabylonjsActions: Record<string, () => void> = {
 		idle: () => {
@@ -48,20 +50,34 @@ function SkillsAvatar() {
 		initializing: () =>
 			engine && createScene(engine, setBabylonProjectStates, startingCameraProps),
 		initialized: () => scene && createLight(scene, setBabylonProjectStates),
-		loading: () =>
+		loading: () => {
+			if (scene) {
+				loadUserModels(
+					startingLoadingModels,
+					scene,
+					modelGroups,
+					setBabylonProjectStates
+				).finally(() => {
+					scene.getNodes().forEach(node => {
+						addNode(node.name, { node: node });
+					});
+				});
+			}
+		},
+		loaded: () =>
 			scene &&
-			createModels(
+			models &&
+			processingUserModels(
 				scene,
-				setBabylonProjectStates,
-				startingLoadingModels,
+				loadedNodes,
+				models,
+				startingTooltips,
 				loadingAnimationModelsNames,
 				meshStartingPropsObject,
-				startingTooltips,
-				modelGroups,
 				addNode,
-				loadedNodes
+				setBabylonProjectStates
 			),
-		loaded: () =>
+		processed: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),
 		ready: () => {
 			if (engine && scene) {

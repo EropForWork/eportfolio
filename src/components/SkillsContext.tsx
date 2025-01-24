@@ -76,6 +76,7 @@ export interface babylonProjectStatesI {
 		| 'initialized' // Сцена инициализирована
 		| 'loading' // Загрузка ресурсов
 		| 'loaded' // Ресурсы загружены
+		| 'processed' // Ресурсы обрабатоны
 		| 'ready' // Готово к рендерингу
 		| 'running' // Активный рендеринг
 		| 'paused' // Сцена приостановлена
@@ -259,12 +260,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				positionMeshName: 'vscode',
 				text: 'VScode Model Tooltip'
 			}
-			// {
-			// 	linkName: 'photoshop',
-			// 	linkTextProgramm: 'photoshop',
-			// 	positionMeshName: 'photoshop',
-			// 	text: 'Photoshop Model Tooltip'
-			// }
 		],
 		[]
 	);
@@ -355,20 +350,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					radius: 5
 				}
 			},
-			// {
-			// 	modelName: 'photoshop.gltf',
-			// 	linkName: 'photoshop',
-			// 	position: new Vector3(0, 2, 0),
-			// 	rotation: new Vector3(0, Tools.ToRadians(90), 0),
-			// 	scaling: new Vector3(0.002, 0.002, 0.002),
-			// 	visibility: 1,
-			// 	cameraProps: {
-			// 		target: new Vector3(1.9, 1.7, 0),
-			// 		alpha: Tools.ToRadians(180),
-			// 		beta: Tools.ToRadians(85),
-			// 		radius: 6
-			// 	}
-			// },
 			{
 				modelName: 'as3.gltf',
 				linkName: 'as3',
@@ -486,12 +467,22 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		Record<string, { node: Node | AbstractMesh | Mesh | TransformNode }>
 	>({});
 
-	const addNode = (
-		key: string,
-		value: { node: Node | AbstractMesh | Mesh | TransformNode }
-	) => {
-		setLoadedNodes(prev => ({ ...prev, [key]: value }));
-	};
+	const addNode = useCallback(
+		(
+			key: string,
+			value: { node: Node | AbstractMesh | Mesh | TransformNode }
+		) => {
+			setLoadedNodes(prev => {
+				if (prev[key]) {
+					const unicName = `egor_mesh_${Object.keys(prev).length}`;
+					value.node.name = unicName;
+					return { ...prev, [unicName]: value };
+				}
+				return { ...prev, [key]: value };
+			});
+		},
+		[]
+	);
 
 	useEffect(() => {
 		if (cameraProps && babylonProjectStates.camera) {
@@ -514,7 +505,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 
 				startingLoadingModels.forEach(modelObject => {
-					// const mesh = scene.getNodeByName(modelObject.linkName);
 					const mesh = loadedNodes[modelObject.linkName]?.node;
 					if (!mesh) {
 						return;
@@ -569,14 +559,12 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!scene) {
 				return;
 			}
-			// const mesh = scene.getNodeByName(meshName);
 			const mesh = loadedNodes[meshName]?.node;
 			if (!mesh) {
 				return;
 			}
 			startingLoadingModels.forEach(modelObject => {
 				const mesh = loadedNodes[modelObject.linkName]?.node;
-				// const mesh = scene.getNodeByName(modelObject.linkName);
 				if (!mesh) {
 					return;
 				}
@@ -598,7 +586,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			});
 			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
 				const mesh = loadedNodes[value.linkName]?.node;
-				// const mesh = scene.getNodeByName(value.linkName);
 				if (!mesh) {
 					return;
 				}
