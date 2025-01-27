@@ -4,11 +4,13 @@ import {
 	AbstractMesh,
 	ArcRotateCamera,
 	DirectionalLight,
+	DynamicTexture,
 	Engine,
 	Mesh,
 	Node,
 	Scene,
 	ShadowGenerator,
+	StandardMaterial,
 	Tools,
 	TransformNode,
 	Vector3
@@ -45,6 +47,7 @@ import {
 	ModelGroupsI
 } from '../functions/babylon/models';
 import { CameraPropsI, moveCamera } from '../functions/babylon/camera';
+import { drawnLines, drowedPoints } from '../functions/babylon/graphicsModel';
 
 export interface loadingModelProps {
 	modelName: string;
@@ -526,6 +529,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 
 	useEffect(() => {
 		if (selectedSkill && babylonProjectStates.state === 'running') {
+			const rootStyles = getComputedStyle(document.documentElement);
+			const bgColor =
+				rootStyles.getPropertyValue('--button-bg') || 'rgba(255, 255, 255, 1)';
 			const modelGroup =
 				modelGroups[hardSkills[Number(selectedSkill)].skillLinkName || 'common'];
 			if (modelGroup) {
@@ -563,13 +569,26 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				});
 
 				Object.entries(graphicModelsNames).forEach(([name]) => {
-					const mesh = loadedNodes[name]?.node;
+					const mesh: AbstractMesh = loadedNodes[name]?.node as AbstractMesh;
 					if (!mesh) {
 						return;
 					}
 					changeMeshVisibility(mesh, modelGroup.linkNames.includes(name) ? 1 : 0);
+					const dynamicTexture = (mesh.material as StandardMaterial)
+						?.diffuseTexture as DynamicTexture;
+					const context = dynamicTexture?.getContext();
+
+					if (!context) {
+						return;
+					}
+					context.fillStyle = bgColor;
+					context.fillRect(0, 0, 1024, 1024);
+					dynamicTexture.update();
+					Object.keys(drowedPoints).forEach(key => delete drowedPoints[key]);
+					drawnLines.clear();
 				});
 			}
+
 			if (babylonProjectStates.camera && startingCameraProps) {
 				setCameraProps({
 					target: startingCameraProps.target,

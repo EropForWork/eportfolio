@@ -21,6 +21,18 @@ import {
 	LoadedNodesType
 } from '../../components/SkillsContext';
 
+interface drowedPointI {
+	x: number;
+	y: number;
+}
+
+interface drowedPointsI {
+	[key: string]: drowedPointI;
+}
+
+export const drowedPoints: drowedPointsI = {};
+export const drawnLines = new Set<string>();
+
 export const createGraphicModels = async (
 	graphicModelsNames: GraphicsModelsT,
 	scene: Scene,
@@ -78,9 +90,17 @@ export const createGraphicModels = async (
 		const sphereObjects = {
 			0: { position: new Vector3(-0.25, 1.4, 1.6), diameter: 0.3 },
 			1: { position: new Vector3(0.15, 3.5, 1), diameter: 0.3 },
-			3: { position: new Vector3(0.15, 3.5, -1), diameter: 0.3 },
-			4: { position: new Vector3(-0.25, 1.4, -1.6), diameter: 0.3 }
+			2: { position: new Vector3(0.15, 3.5, -1), diameter: 0.3 },
+			3: { position: new Vector3(-0.25, 1.4, -1.6), diameter: 0.3 }
 		};
+
+		const magickNumbersPoints: drowedPointsI = {
+			0: { x: 110, y: 100 },
+			1: { x: 850, y: 260 },
+			2: { x: 850, y: 770 },
+			3: { x: 110, y: 920 }
+		};
+
 		Object.entries(sphereObjects).forEach(([key, value]) => {
 			const sphere = createVectorSphere(
 				scene,
@@ -90,6 +110,11 @@ export const createGraphicModels = async (
 				lineColor
 			);
 			sphere.setParent(mesh);
+			if (!sphere.metadata) {
+				sphere.metadata = {};
+			}
+
+			sphere.metadata.graphicsPointPosition = magickNumbersPoints[key];
 		});
 
 		return mesh;
@@ -130,23 +155,64 @@ const createVectorSphere = (
 	sphere.actionManager = new ActionManager(scene);
 	sphere.actionManager.registerAction(
 		new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-			changeMeshVisibility(sphere, 0, true, 0.1);
-			// Добавить точку на канвас текстуры
-		})
-	);
-	sphere.actionManager.registerAction(
-		new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-			if (sphere.visibility !== 0) {
-				changeMeshVisibility(sphere, 0.5);
+			changeMeshVisibility(sphere, 0, true, 300);
+
+			const canvasTexture = (
+				(sphere.parent as AbstractMesh).material as StandardMaterial
+			).diffuseTexture as DynamicTexture;
+
+			drawPointOnTexture(
+				indexName,
+				canvasTexture,
+				sphere.metadata.graphicsPointPosition.x || 0,
+				sphere.metadata.graphicsPointPosition.y || 0,
+				5,
+				'red'
+			);
+			const drawnKeys = Object.keys(drowedPoints);
+			if (drawnKeys.length > 1) {
+				const connections = [
+					['0', '1'],
+					['0', '3'],
+					['1', '2'],
+					['2', '3']
+				];
+
+				connections.forEach(([start, end]) => {
+					if (drawnKeys.includes(start) && drawnKeys.includes(end)) {
+						const startPoint = drowedPoints[start];
+						const endPoint = drowedPoints[end];
+						const lineKey = `${start}-${end}`;
+						if (
+							startPoint &&
+							endPoint &&
+							'x' in startPoint &&
+							'y' in startPoint &&
+							'x' in endPoint &&
+							'y' in endPoint
+						) {
+							if (!drawnLines.has(lineKey)) {
+								drawLineOnTexture(
+									canvasTexture,
+									startPoint.x,
+									startPoint.y,
+									endPoint.x,
+									endPoint.y
+								);
+
+								drawnLines.add(lineKey);
+							}
+						}
+					}
+				});
 			}
 		})
 	);
 	sphere.actionManager.registerAction(
-		new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
-			if (sphere.visibility !== 0) {
-				changeMeshVisibility(sphere, 0.1);
-			}
-		})
+		new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {})
+	);
+	sphere.actionManager.registerAction(
+		new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {})
 	);
 
 	return sphere;
@@ -190,3 +256,41 @@ export function changeVectorModelsColor(
 		}
 	});
 }
+
+const drawPointOnTexture = (
+	indexName: string,
+	texture: DynamicTexture,
+	x: number,
+	y: number,
+	size: number = 5,
+	color: string = 'red'
+) => {
+	const context = texture.getContext();
+	context.beginPath();
+	context.arc(x, y, size, 0, 2 * Math.PI);
+	context.fillStyle = color;
+	context.fill();
+	context.closePath();
+	texture.update();
+	drowedPoints[indexName] = { x: x, y: y };
+};
+
+const drawLineOnTexture = (
+	texture: DynamicTexture,
+	x1: number,
+	y1: number,
+	x2: number,
+	y2: number,
+	width: number = 5,
+	color: string = 'red'
+) => {
+	const context = texture.getContext();
+	context.beginPath();
+	context.moveTo(x1, y1);
+	context.lineTo(x2, y2);
+	context.lineWidth = width;
+	context.strokeStyle = color;
+	context.stroke();
+	context.closePath();
+	texture.update();
+};
