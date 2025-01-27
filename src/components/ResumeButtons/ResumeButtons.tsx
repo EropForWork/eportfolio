@@ -1,6 +1,9 @@
+import { changeVectorModelsColor } from '../../functions/babylon/graphicsModel';
+import { useSkillsContext } from '../SkillsContext';
 import './ResumeButtons.css';
 
 const ResumeButtons = () => {
+	const { graphicModelsNames, loadedNodes } = useSkillsContext();
 	const currentTheme = localStorage.getItem('theme');
 	if (currentTheme) {
 		document.documentElement.setAttribute('data-theme', currentTheme);
@@ -23,6 +26,7 @@ const ResumeButtons = () => {
 
 		document.documentElement.setAttribute('data-theme', newTheme);
 		localStorage.setItem('theme', newTheme);
+		changeVectorModelsColor(graphicModelsNames, loadedNodes);
 	};
 
 	return (

@@ -1,11 +1,15 @@
 import ResumeButtons from '../ResumeButtons/ResumeButtons';
 import SkillsSection from '../SkillsSection/SkillsSection';
+import { SkillsProvider } from '../SkillsContext';
+
 import './MainPage.css';
 const MainPage = () => {
 	return (
 		<div className="main-page">
-			<SkillsSection />
-			<ResumeButtons />
+			<SkillsProvider>
+				<SkillsSection />
+				<ResumeButtons />
+			</SkillsProvider>
 		</div>
 	);
 };

@@ -41,6 +41,7 @@ export interface MeshMetadataI {
 	realVisibility?: number;
 	linkName?: string;
 	linkGroupName?: string;
+	currentTheme?: string;
 }
 
 interface SceneMetadataI {
@@ -495,18 +496,6 @@ export async function processingUserModels(
 		mesh.name = meshStartingPropsObject[key].linkName;
 		addNode(mesh.name, { node: mesh });
 
-		// const textureName = meshStartingPropsObject[key].textureName;
-		// const material = (mesh as AbstractMesh).material;
-		// if (textureName && material && scene) {
-		// 	if (material instanceof PBRMaterial) {
-		// 		const texture = new Texture(textureName, scene);
-		// 		material.albedoTexture = texture;
-		// 	} else if (material instanceof StandardMaterial) {
-		// 		const texture = new Texture(textureName, scene);
-		// 		material.diffuseTexture = texture;
-		// 	}
-		// }
-
 		mesh.getChildMeshes().forEach(
 			mesh =>
 				((mesh.metadata as MeshMetadataI) = {
@@ -848,3 +837,34 @@ export function hideTooltip(
 		}
 	}
 }
+
+export const toColor3 = (colorString: string): Color3 => {
+	if (colorString.startsWith('#')) {
+		const hex = colorString.slice(1);
+		if (hex.length === 3) {
+			const r = parseInt(hex[0] + hex[0], 16);
+			const g = parseInt(hex[1] + hex[1], 16);
+			const b = parseInt(hex[2] + hex[2], 16);
+			return new Color3(r / 255, g / 255, b / 255);
+		} else if (hex.length === 6) {
+			const r = parseInt(hex.slice(0, 2), 16);
+			const g = parseInt(hex.slice(2, 4), 16);
+			const b = parseInt(hex.slice(4, 6), 16);
+			return new Color3(r / 255, g / 255, b / 255);
+		} else {
+			throw new Error(`Invalid HEX color string: "${colorString}"`);
+		}
+	} else if (colorString.startsWith('rgb')) {
+		const match = colorString.match(
+			/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*\d*\.?\d+)?\)/
+		);
+		if (!match) {
+			throw new Error(`Invalid RGBA or RGB string: "${colorString}"`);
+		}
+
+		const [, r, g, b] = match.map(Number);
+		return new Color3(r / 255, g / 255, b / 255);
+	} else {
+		throw new Error(`Проверьте цвет: "${colorString}"`);
+	}
+};
