@@ -165,6 +165,19 @@ export const loadModels = async (
 					mainMesh.scaling = startingModel.scaling;
 				}
 
+				if (startingModel.linkName === 'robot') {
+					const tposeRobotAnimation = scene.getAnimationGroupByName('tpose');
+					if (tposeRobotAnimation) {
+						tposeRobotAnimation.dispose();
+					}
+					const walkRobotAnimation = scene.getAnimationGroupByName('walk');
+					if (walkRobotAnimation) {
+						walkRobotAnimation.stop();
+						walkRobotAnimation.start(true, 1, 60, 120);
+						walkRobotAnimation.weight = 1;
+					}
+				}
+
 				return mainMesh;
 			} catch (error) {
 				console.error(

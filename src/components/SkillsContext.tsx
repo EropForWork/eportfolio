@@ -396,6 +396,20 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					beta: Tools.ToRadians(85),
 					radius: 6
 				}
+			},
+			{
+				modelName: 'robot.gltf',
+				linkName: 'robot',
+				position: new Vector3(0, 0.5, 0),
+				rotation: new Vector3(0, Tools.ToRadians(240), 0),
+				scaling: new Vector3(2, 2, 2),
+				visibility: 1,
+				cameraProps: {
+					target: new Vector3(0, 1, 1),
+					alpha: Tools.ToRadians(180),
+					beta: Tools.ToRadians(85),
+					radius: 6
+				}
 			}
 		],
 		[]
@@ -416,7 +430,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				linkNames: ['vectorDesk'],
 				models: []
 			},
-			neuro: { linkNames: ['neuro'], models: [] }
+			neuro: { linkNames: ['robot'], models: [] }
 		}),
 		[]
 	);
@@ -473,7 +487,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					{
 						name: 'Активный пользователь различных ИИ для генерации текста, рисунков',
 						icon: <FaNetworkWired />,
-						level: 70
+						level: 70,
+						linkName: 'robot'
 					}
 				],
 				skillLinkName: 'neuro'
