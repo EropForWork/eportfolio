@@ -11,8 +11,8 @@ import {
 	DynamicTexture
 } from 'babylonjs';
 import {
+	addMeshMetadata,
 	changeMeshVisibility,
-	MeshMetadataI,
 	ModelGroupsI,
 	toColor3
 } from './models';
@@ -48,24 +48,11 @@ export const createGraphicModels = async (
 		const mesh = MeshBuilder.CreateBox(name, boxSize, scene);
 		mesh.position = position;
 		mesh.rotation = rotation;
-		const meshMetadata: MeshMetadataI = {
-			visibility: 1,
-			mainParent: mesh,
-			mainParentName: name.toLocaleLowerCase(),
-			linkName: name,
-			linkGroupName:
-				Object.entries(modelGroups).find(([, group]) =>
-					group.linkNames.includes(name)
-				)?.[0] || 'common',
-			currentTheme: localStorage.getItem('theme') || 'default'
-		};
-		mesh.metadata = meshMetadata;
+		addMeshMetadata(mesh, modelGroups, 1, mesh, name.toLocaleLowerCase(), name);
 
 		const rootStyles = getComputedStyle(document.documentElement);
 		const bgColor =
 			rootStyles.getPropertyValue('--button-bg') || 'rgba(255, 255, 255, 1)';
-		const lineColor =
-			rootStyles.getPropertyValue('--button-text') || 'rgba(0, 0, 0, 1)';
 
 		const textureSize: number = 1024;
 		const texture = new DynamicTexture(
@@ -107,7 +94,7 @@ export const createGraphicModels = async (
 				key,
 				value.position,
 				value.diameter,
-				lineColor
+				rootStyles
 			);
 			sphere.setParent(mesh);
 			if (!sphere.metadata) {
@@ -140,8 +127,10 @@ const createVectorSphere = (
 	indexName: string,
 	position: Vector3,
 	diameter: number = 1,
-	color: string = 'rgba(255, 0, 0, 1)'
+	rootStyles: CSSStyleDeclaration
 ): Mesh => {
+	const color =
+		rootStyles.getPropertyValue('--button-text') || 'rgba(255, 0, 0, 1)';
 	const sphere = MeshBuilder.CreateSphere(
 		'redSphere_' + indexName,
 		{ diameter: diameter },
@@ -167,7 +156,7 @@ const createVectorSphere = (
 				sphere.metadata.graphicsPointPosition.x || 0,
 				sphere.metadata.graphicsPointPosition.y || 0,
 				5,
-				'red'
+				rootStyles
 			);
 			const drawnKeys = Object.keys(drowedPoints);
 			if (drawnKeys.length > 1) {
@@ -197,7 +186,9 @@ const createVectorSphere = (
 									startPoint.x,
 									startPoint.y,
 									endPoint.x,
-									endPoint.y
+									endPoint.y,
+									5,
+									rootStyles
 								);
 
 								drawnLines.add(lineKey);
@@ -263,8 +254,10 @@ const drawPointOnTexture = (
 	x: number,
 	y: number,
 	size: number = 5,
-	color: string = 'red'
+	rootStyles: CSSStyleDeclaration
 ) => {
+	const color =
+		rootStyles.getPropertyValue('--button-text') || 'rgba(255, 0, 0, 1)';
 	const context = texture.getContext();
 	context.beginPath();
 	context.arc(x, y, size, 0, 2 * Math.PI);
@@ -282,8 +275,10 @@ const drawLineOnTexture = (
 	x2: number,
 	y2: number,
 	width: number = 5,
-	color: string = 'red'
+	rootStyles: CSSStyleDeclaration
 ) => {
+	const color =
+		rootStyles.getPropertyValue('--button-text') || 'rgba(255, 0, 0, 1)';
 	const context = texture.getContext();
 	context.beginPath();
 	context.moveTo(x1, y1);

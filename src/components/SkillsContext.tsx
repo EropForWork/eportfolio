@@ -127,6 +127,17 @@ export type GraphicsModelsT = Record<
 	}
 >;
 
+export interface GitGraphValueI {
+	message: string;
+	parentId: string;
+	position?: Vector3;
+	mesh?: AbstractMesh;
+}
+
+export type GitGraphValuesType = {
+	[name: string]: GitGraphValueI;
+};
+
 interface SkillItemI {
 	name: string;
 	icon: ReactNode;
@@ -172,6 +183,7 @@ interface SkillsContextType {
 	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>;
 	graphicModelsNames: GraphicsModelsT;
 	registerActionsModelsNames: string[];
+	gitGraphValues: GitGraphValuesType;
 }
 
 const SkillsContext = createContext<SkillsContextType | undefined>(undefined);
@@ -210,12 +222,12 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 	}, []);
 
 	const loadingAnimationModelsNames = useMemo<string[]>(
-		() => ['css', 'html', 'logos', 'react', 'git', 'vscode', 'as3'],
+		() => ['css', 'html', 'logos', 'react', 'vscode', 'as3'],
 		[]
 	);
 
 	const registerActionsModelsNames = useMemo<string[]>(
-		() => ['css', 'html', 'logos', 'react', 'git', 'vscode', 'as3'],
+		() => ['css', 'html', 'logos', 'react', 'vscode', 'as3'],
 		[]
 	);
 
@@ -226,6 +238,24 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				position: new Vector3(0, 2.5, 0),
 				rotation: new Vector3(0, 0, Tools.ToRadians(350)),
 				boxSize: { width: 0.1, height: 3, depth: 4 }
+			}
+		}),
+		[]
+	);
+
+	const gitGraphValues = useMemo<GitGraphValuesType>(
+		() => ({
+			commit1: {
+				message: 'Initial commit',
+				parentId: '',
+				position: new Vector3(0, 0, 0)
+			},
+			commit2: { message: 'Add feature A', parentId: 'commit1' },
+			commit3: { message: 'Fix bug in feature A', parentId: 'commit2' },
+			commit4: {
+				message: 'Add feature B',
+				parentId: 'commit2',
+				position: new Vector3(0.6, 0.5, 0)
 			}
 		}),
 		[]
@@ -280,12 +310,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				linkTextProgramm: 'html',
 				positionMeshName: 'Plane.002_five_0',
 				text: 'HTML5 Model Tooltip'
-			},
-			{
-				linkName: 'git',
-				linkTextProgramm: 'git',
-				positionMeshName: 'git',
-				text: 'GIT Model Tooltip'
 			},
 			{
 				linkName: 'vscode',
@@ -356,20 +380,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 			},
 			{
-				modelName: 'git.gltf',
-				linkName: 'git',
-				position: new Vector3(0, 2, 0),
-				rotation: new Vector3(0, Tools.ToRadians(90), 0),
-				scaling: new Vector3(1, 1, 1),
-				visibility: 1,
-				cameraProps: {
-					target: new Vector3(1.9, 1.7, 0),
-					alpha: Tools.ToRadians(180),
-					beta: Tools.ToRadians(85),
-					radius: 5
-				}
-			},
-			{
 				modelName: 'vscode.gltf',
 				linkName: 'vscode',
 				position: new Vector3(0, 2, 0),
@@ -421,7 +431,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				linkNames: ['css', 'html', 'react', 'js', 'logos', 'as3'],
 				models: []
 			},
-			versionControl: { linkNames: ['git'], models: [] },
+			versionControl: { linkNames: ['commitModel'], models: [] },
 			programmingTools: {
 				linkNames: ['vscode', 'sublime'],
 				models: []
@@ -452,7 +462,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			{
 				text: 'Контроль версий',
 				icon: <MdBuild />,
-				items: [{ name: 'Git', icon: <FaGitAlt />, level: 70, linkName: 'git' }],
+				items: [
+					{ name: 'Git', icon: <FaGitAlt />, level: 70, linkName: 'commitModel' }
+				],
 				skillLinkName: 'versionControl'
 			},
 			{
@@ -582,7 +594,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 						);
 					}
 				});
-
 				Object.entries(graphicModelsNames).forEach(([name]) => {
 					const mesh: AbstractMesh = loadedNodes[name]?.node as AbstractMesh;
 					if (!mesh) {
@@ -602,6 +613,15 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					Object.keys(drowedPoints).forEach(key => delete drowedPoints[key]);
 					drawnLines.clear();
 				});
+
+				const mesh: AbstractMesh = loadedNodes['commitModel']?.node as AbstractMesh;
+				if (!mesh) {
+					return;
+				}
+				changeMeshVisibility(
+					mesh,
+					modelGroup.linkNames.includes('commitModel') ? 1 : 0
+				);
 			}
 
 			if (babylonProjectStates.camera && startingCameraProps) {
@@ -705,7 +725,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			overedMesh,
 			setOveredMesh,
 			graphicModelsNames,
-			registerActionsModelsNames
+			registerActionsModelsNames,
+			gitGraphValues
 		}),
 		[
 			selectedSkill,

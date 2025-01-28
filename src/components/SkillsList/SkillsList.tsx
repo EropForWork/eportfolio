@@ -107,7 +107,6 @@ const SkillsList = () => {
 							<li
 								key={index}
 								className="skill-group-container soft-skill"
-								onClick={() => handleSkillClick(`${index}`)}
 							>
 								{skill}
 							</li>

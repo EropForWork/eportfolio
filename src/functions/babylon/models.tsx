@@ -24,6 +24,7 @@ import * as GUI from 'babylonjs-gui';
 import { animateValue, randomNumber } from './common';
 import {
 	babylonProjectStatesI,
+	GitGraphValuesType,
 	GraphicsModelsT,
 	LoadedNodesType,
 	loadingModelProps,
@@ -32,6 +33,7 @@ import {
 } from '../../components/SkillsContext';
 import { CameraPropsI, createCamera } from './camera';
 import { createGraphicModels } from './graphicsModel';
+import { buildCommitTree } from './treeModel';
 
 export interface MeshMetadataI {
 	visibility: number;
@@ -79,6 +81,7 @@ export const changeMeshVisibility = (
 		realVisibility: saveVisibility ? undefined : node.metadata.visibility,
 		visibility: visibility
 	};
+
 	if (node instanceof AbstractMesh || node instanceof Mesh) {
 		if (duration === 0) {
 			node.visibility = visibility;
@@ -138,17 +141,14 @@ export const loadModels = async (
 				mainMesh.rotation = new Vector3(0, 0, 0);
 
 				model.meshes.forEach(mesh => {
-					const meshMetadata: MeshMetadataI = {
-						visibility: startingModel.visibility ? startingModel.visibility : 1,
-						mainParent: mainMesh,
-						mainParentName: mainMesh.name.toLocaleLowerCase(),
-						linkName: startingModel.linkName,
-						linkGroupName:
-							Object.entries(modelGroups).find(([, group]) =>
-								group.linkNames.includes(startingModel.linkName)
-							)?.[0] || 'common'
-					};
-					mesh.metadata = meshMetadata;
+					addMeshMetadata(
+						mesh,
+						modelGroups,
+						startingModel.visibility ? startingModel.visibility : 1,
+						mainMesh,
+						mainMesh.name.toLocaleLowerCase(),
+						startingModel.linkName
+					);
 					mesh.material
 						?.getActiveTextures()
 						?.forEach(texture => texture?.readPixels?.());
@@ -395,7 +395,8 @@ export async function loadUserModels(
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>,
-	graphicModelsNames: GraphicsModelsT
+	graphicModelsNames: GraphicsModelsT,
+	gitGraphValues: GitGraphValuesType
 ) {
 	const modelsArray = await loadModels(
 		startingLoadingModels,
@@ -409,7 +410,14 @@ export async function loadUserModels(
 		modelGroups
 	);
 
+	const gitGraphModel: AbstractMesh = await buildCommitTree(
+		scene,
+		gitGraphValues,
+		modelGroups
+	);
+
 	const modifiedModelsArray = modelsArray.concat(graphicModels);
+	modifiedModelsArray.push(gitGraphModel);
 
 	setBabylonProjectStates(prevState => ({
 		...prevState,
@@ -881,3 +889,28 @@ export const toColor3 = (colorString: string): Color3 => {
 		throw new Error(`Проверьте цвет: "${colorString}"`);
 	}
 };
+
+export function addMeshMetadata(
+	mesh: AbstractMesh,
+	modelGroups: ModelGroupsI,
+	visibility?: number,
+	mainParent?: AbstractMesh,
+	parentName?: string,
+	linkName?: string
+) {
+	const meshMetadata: MeshMetadataI = {
+		visibility: visibility || 1,
+		mainParent: mainParent,
+		mainParentName:
+			parentName ||
+			mainParent?.name.toLocaleLowerCase() ||
+			mesh?.name.toLocaleLowerCase(),
+		linkName: linkName || mainParent?.name || mesh.name,
+		linkGroupName:
+			Object.entries(modelGroups).find(([, group]) =>
+				group.linkNames.includes(linkName || mainParent?.name || mesh.name)
+			)?.[0] || 'common',
+		currentTheme: localStorage.getItem('theme') || 'default'
+	};
+	mesh.metadata = meshMetadata;
+}

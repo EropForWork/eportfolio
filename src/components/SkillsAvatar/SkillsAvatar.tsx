@@ -31,7 +31,8 @@ function SkillsAvatar() {
 		overedMesh,
 		setOveredMesh,
 		graphicModelsNames,
-		registerActionsModelsNames
+		registerActionsModelsNames,
+		gitGraphValues
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
@@ -65,7 +66,8 @@ function SkillsAvatar() {
 					scene,
 					modelGroups,
 					setBabylonProjectStates,
-					graphicModelsNames
+					graphicModelsNames,
+					gitGraphValues
 				).finally(() => {
 					scene.getNodes().forEach(node => {
 						addNode(node.name, { node: node });
