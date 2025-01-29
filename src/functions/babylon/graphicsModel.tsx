@@ -271,8 +271,6 @@ const drawLineOnTexture = (
 	width: number = 5,
 	rootStyles: CSSStyleDeclaration
 ) => {
-	console.log(x1, y1, x2, y2);
-
 	const color =
 		rootStyles.getPropertyValue('--button-text') || 'rgba(255, 0, 0, 1)';
 	const context = texture.getContext();

@@ -88,7 +88,8 @@ function SkillsAvatar() {
 				addNode,
 				setBabylonProjectStates,
 				setOveredMesh,
-				registerActionsModelsNames
+				registerActionsModelsNames,
+				modelGroups
 			),
 		processed: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),

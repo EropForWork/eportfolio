@@ -1,7 +1,9 @@
 import {
 	AbstractMesh,
+	ActionManager,
 	Color3,
 	DynamicTexture,
+	ExecuteCodeAction,
 	Mesh,
 	MeshBuilder,
 	Scene,
@@ -13,7 +15,15 @@ import {
 	GitGraphValueI,
 	GitGraphValuesType
 } from '../../components/SkillsContext';
-import { addMeshMetadata, ModelGroupsI, toColor3 } from './models';
+import {
+	addMeshMetadata,
+	changeMeshVisibility,
+	ModelGroupsI,
+	toColor3
+} from './models';
+import earcut from 'earcut';
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).earcut = earcut;
 
 export function buildCommitTree(
 	scene: Scene,
@@ -56,16 +66,31 @@ export function buildCommitTree(
 			meshContainer.name,
 			meshContainer.name
 		);
-		console.log(commitMap[name].metadata);
+		addMeshMetadata(
+			commitMap[name].getChildMeshes()[0],
+			modelGroups,
+			value.visibility && 1,
+			meshContainer,
+			meshContainer.name,
+			meshContainer.name
+		);
 	});
 
 	Object.entries(commits).forEach(([name, value]) => {
 		if (value.parentId && commits[value.parentId]) {
-			createCommitLink(
+			const lines = createCommitLink(
 				scene,
 				commitMap[name],
 				commitMap[value.parentId],
 				lineColor
+			);
+			addMeshMetadata(
+				lines,
+				modelGroups,
+				value.visibility && 1,
+				meshContainer,
+				meshContainer.name,
+				meshContainer.name
 			);
 		}
 	});
@@ -73,7 +98,58 @@ export function buildCommitTree(
 	const gitButtons = scene.meshes.find(mesh => mesh.name === 'gitButtons');
 	if (gitButtons) {
 		gitButtons.parent = meshContainer;
-		console.log(gitButtons);
+		const planeText = gitButtons
+			.getChildMeshes()
+			.find(mesh => mesh.name === 'Plane');
+		if (planeText) {
+			planeText.dispose();
+			create3dText('commit', scene, 0.3).then(mesh => {
+				if (!mesh) {
+					return;
+				}
+				mesh.parent = gitButtons;
+				mesh.rotation.y = Tools.ToRadians(270);
+				mesh.position = new Vector3(-0.1, 0.33, -0.6);
+				mesh.visibility = 0;
+				addMeshMetadata(
+					mesh,
+					modelGroups,
+					1,
+					meshContainer,
+					meshContainer.name,
+					meshContainer.name
+				);
+			});
+		}
+		const button = gitButtons
+			.getChildMeshes()
+			.find(mesh => mesh.name === 'Cylinder');
+		if (button) {
+			button.actionManager = new ActionManager(scene);
+			button.actionManager.registerAction(
+				new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
+					button.position.x = -0.3;
+				})
+			);
+			button.actionManager.registerAction(
+				new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
+					button.position.x = -0.327;
+				})
+			);
+			button.metadata.clickActions = [
+				{ name: 'commit', nodes: ['commit5'] },
+				{ name: 'merge', nodes: ['commit6', 'commit7'] }
+			];
+			button.metadata.clicks = 0;
+			//TODO Подчищать clicks при клике на любой скил или программу
+			// Если 0, то
+			button.actionManager.registerAction(
+				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
+					button.position.x = -0.15;
+					gitBtnClick(button, commitMap);
+				})
+			);
+		}
 	}
 
 	return meshContainer;
@@ -124,10 +200,14 @@ function createCommitLink(
 	parentCommitNode: AbstractMesh,
 	color3: Color3
 ) {
-	const points = [commitNode.position, parentCommitNode.position];
+	const points = [
+		new Vector3(0, 0, 0),
+		parentCommitNode.position.subtract(commitNode.position)
+	];
 	const lines = MeshBuilder.CreateLines('lines', { points: points }, scene);
 	lines.color = color3;
-	lines.parent = commitNode.parent;
+	lines.parent = commitNode;
+	return lines;
 }
 
 function calculatePosition(
@@ -150,4 +230,55 @@ function calculatePosition(
 	}
 
 	return new Vector3(0, 0, 0);
+}
+
+async function create3dText(
+	text: string,
+	scene: Scene,
+	size: number = 0.5,
+	color: Color3 = new Color3(1, 0, 0)
+) {
+	const fontData = await (
+		await fetch('./babylon/Droid Sans_Regular.json')
+	).json();
+	const textOptions = {
+		size: size,
+		depth: 0.1
+	};
+	const textMesh = MeshBuilder.CreateText(
+		'text',
+		text,
+		fontData,
+		textOptions,
+		scene
+	);
+	const textMaterial = new StandardMaterial('textMaterial', scene);
+	textMaterial.diffuseColor = color;
+	if (textMesh) {
+		textMesh.material = textMaterial;
+	}
+	return textMesh;
+}
+
+function gitBtnClick(
+	clickedMesh: AbstractMesh,
+	commitMap: {
+		[name: string]: AbstractMesh;
+	}
+) {
+	const clickNames: string[] =
+		clickedMesh.metadata.clickActions[clickedMesh.metadata.clicks].nodes;
+	if (clickNames) {
+		clickNames.forEach(names => {
+			const mesh = commitMap[names];
+			changeMeshVisibility(mesh, 1, true, 300, true);
+		});
+	}
+	//TODO
+	const btnName: string =
+		clickedMesh.metadata.clickActions[clickedMesh.metadata.clicks].name;
+	console.log(btnName);
+
+	// changeBtnText();
+	clickedMesh.metadata.clicks++;
 }

@@ -442,9 +442,9 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			{
 				modelName: 'buttons.gltf',
 				linkName: 'gitButtons',
-				position: new Vector3(1.4, 2, 0),
-				rotation: new Vector3(Tools.ToRadians(270), 0, 0),
-				scaling: new Vector3(0.015, 0.015, -0.015),
+				position: new Vector3(1.4, 1, 0),
+				rotation: new Vector3(0, Tools.ToRadians(270), 0),
+				scaling: new Vector3(0.3, 0.3, -0.3),
 				visibility: 1
 			}
 		],
@@ -603,7 +603,10 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 							mesh,
 							modelGroup.linkNames.includes(modelObject.linkName)
 								? modelObject.visibility
-								: 0
+								: 0,
+							true,
+							300,
+							!modelGroup.linkNames.includes(modelObject.linkName)
 						);
 					}
 				});
@@ -616,7 +619,10 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					if (value.visibility) {
 						changeMeshVisibility(
 							mesh,
-							modelGroup.linkNames.includes(value.linkName) ? value.visibility : 0
+							modelGroup.linkNames.includes(value.linkName) ? value.visibility : 0,
+							true,
+							300,
+							!modelGroup.linkNames.includes(value.linkName)
 						);
 					}
 				});
@@ -625,7 +631,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					if (!mesh) {
 						return;
 					}
-					changeMeshVisibility(mesh, modelGroup.linkNames.includes(name) ? 1 : 0);
+					changeMeshVisibility(
+						mesh,
+						modelGroup.linkNames.includes(name) ? 1 : 0,
+						true,
+						300,
+						!modelGroup.linkNames.includes(name)
+					);
 					const dynamicTexture = (mesh.material as StandardMaterial)
 						?.diffuseTexture as DynamicTexture;
 					const context = dynamicTexture?.getContext();
@@ -646,7 +658,10 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 				changeMeshVisibility(
 					mesh,
-					modelGroup.linkNames.includes('commitModel') ? 1 : 0
+					modelGroup.linkNames.includes('commitModel') ? 1 : 0,
+					true,
+					300,
+					!modelGroup.linkNames.includes('commitModel')
 				);
 			}
 
@@ -687,7 +702,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					return;
 				}
 				if (modelObject.visibility !== undefined) {
-					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
+					changeMeshVisibility(
+						mesh,
+						mesh.name === meshName ? 1 : 0,
+						true,
+						300,
+						!(mesh.name === meshName)
+					);
 				}
 				if (
 					mesh.name === meshName &&
@@ -704,7 +725,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				}
 
 				if (value.visibility !== undefined) {
-					changeMeshVisibility(mesh, mesh.name === meshName ? 1 : 0);
+					changeMeshVisibility(
+						mesh,
+						mesh.name === meshName ? 1 : 0,
+						true,
+						300,
+						!(mesh.name === meshName)
+					);
 				}
 
 				if (
@@ -725,7 +752,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				if (!mesh) {
 					return;
 				}
-				changeMeshVisibility(mesh, meshName === mesh.name ? 1 : 0);
+				changeMeshVisibility(
+					mesh,
+					meshName === mesh.name ? 1 : 0,
+					true,
+					300,
+					!(meshName === mesh.name)
+				);
 				const dynamicTexture = (mesh.material as StandardMaterial)
 					?.diffuseTexture as DynamicTexture;
 				const context = dynamicTexture?.getContext();
@@ -745,7 +778,13 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!commitModel) {
 				return;
 			}
-			changeMeshVisibility(commitModel, commitModel.name === meshName ? 1 : 0);
+			changeMeshVisibility(
+				commitModel,
+				commitModel.name === meshName ? 1 : 0,
+				true,
+				300,
+				!(commitModel.name === meshName)
+			);
 
 			if (cameraProps === null) {
 				cameraProps = startingCameraProps;

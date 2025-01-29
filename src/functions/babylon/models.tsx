@@ -41,6 +41,7 @@ export interface MeshMetadataI {
 	mainParentName?: string;
 	cycleAnimation?: Animatable;
 	realVisibility?: number;
+	startingVisibility?: number;
 	linkName?: string;
 	linkGroupName?: string;
 	currentTheme?: string;
@@ -68,13 +69,16 @@ export const changeMeshVisibility = (
 	node: Node,
 	propVisibility: number,
 	saveVisibility: boolean = true,
-	duration: number = 300
+	duration: number = 300,
+	force: boolean = false
 ): void => {
 	const visibility = node.name.includes('redSphere_')
 		? propVisibility === 1
 			? 0.1
 			: propVisibility
-		: propVisibility;
+		: force
+			? propVisibility
+			: (node.metadata?.startingVisibility ?? 0);
 
 	(node.metadata as MeshMetadataI) = {
 		...node.metadata,
@@ -118,7 +122,7 @@ export const changeMeshVisibility = (
 	}
 
 	node.getChildren().forEach(child => {
-		changeMeshVisibility(child, visibility, saveVisibility, duration);
+		changeMeshVisibility(child, visibility, saveVisibility, duration, force);
 	});
 };
 
@@ -445,7 +449,8 @@ export async function processingUserModels(
 		React.SetStateAction<babylonProjectStatesI>
 	>,
 	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>,
-	registerActionsModelsNames: string[]
+	registerActionsModelsNames: string[],
+	modelGroups: ModelGroupsI
 ) {
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
@@ -468,7 +473,7 @@ export async function processingUserModels(
 	});
 
 	modelsArray.forEach(model => {
-		changeMeshVisibility(model, 0, true, 0);
+		changeMeshVisibility(model, 0, true, 0, true);
 	});
 
 	loadingAnimationModelsNames.forEach(modelName => {
@@ -502,32 +507,22 @@ export async function processingUserModels(
 		}
 	});
 
-	for (const key in meshStartingPropsObject) {
-		const mesh = loadedNodes[key]?.node;
+	Object.entries(meshStartingPropsObject).forEach(([name, value]) => {
+		const mesh = loadedNodes[name]?.node;
 		if (!mesh) {
 			return;
 		}
-		(mesh.metadata as MeshMetadataI) = {
-			...mesh.metadata,
-			visibility: meshStartingPropsObject[key].visibility
-				? meshStartingPropsObject[key].visibility
-				: 1,
-			linkName: meshStartingPropsObject[key].linkName
-		};
-		mesh.name = meshStartingPropsObject[key].linkName;
-		addNode(mesh.name, { node: mesh });
-
-		mesh.getChildMeshes().forEach(
-			mesh =>
-				((mesh.metadata as MeshMetadataI) = {
-					...mesh.metadata,
-					visibility: meshStartingPropsObject[key].visibility
-						? meshStartingPropsObject[key].visibility
-						: 1,
-					linkName: meshStartingPropsObject[key].linkName
-				})
+		mesh.name = value.linkName;
+		addMeshMetadata(
+			mesh as AbstractMesh,
+			modelGroups,
+			value.visibility ? value.visibility : 1,
+			mesh as AbstractMesh,
+			mesh.name.toLocaleLowerCase(),
+			value.linkName
 		);
-	}
+		addNode(mesh.name, { node: mesh });
+	});
 
 	setBabylonProjectStates(prevState => ({
 		...prevState,
@@ -834,7 +829,7 @@ export function revialTooltip(
 				1;
 
 			if (visibility < 0.3) {
-				changeMeshVisibility(model, 0.3, false);
+				changeMeshVisibility(model, 0.3, false, 300, true);
 			}
 		}
 	}
@@ -854,7 +849,13 @@ export function hideTooltip(
 			const model = loadedNodes[tooltip.linkName]?.node;
 
 			if (model && model.metadata.realVisibility !== undefined) {
-				changeMeshVisibility(model, model.metadata.realVisibility);
+				changeMeshVisibility(
+					model,
+					model.metadata.realVisibility,
+					false,
+					300,
+					true
+				);
 			}
 		}
 	}
@@ -901,6 +902,7 @@ export function addMeshMetadata(
 ) {
 	const meshMetadata: MeshMetadataI = {
 		visibility: visibility ?? 1,
+		startingVisibility: visibility ?? 1,
 		mainParent: mainParent,
 		mainParentName:
 			parentName ||
