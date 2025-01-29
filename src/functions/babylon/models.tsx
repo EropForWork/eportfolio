@@ -16,7 +16,7 @@ import {
 	QuadraticEase,
 	Scene,
 	SceneLoader,
-	ShadowGenerator,
+	// ShadowGenerator,
 	TransformNode,
 	Vector3
 } from 'babylonjs';
@@ -562,18 +562,19 @@ export function createShadows(
 		React.SetStateAction<babylonProjectStatesI>
 	>
 ) {
-	const shadowGenerator = new ShadowGenerator(1024, light);
-	shadowGenerator.useBlurExponentialShadowMap = true;
-	shadowGenerator.blurKernel = 32;
-	models.forEach(model => {
-		shadowGenerator.addShadowCaster(model);
-		model.receiveShadows = true;
-	});
-	light.autoCalcShadowZBounds = true;
+	// const shadowGenerator = new ShadowGenerator(1024, light);
+	// shadowGenerator.useBlurExponentialShadowMap = true;
+	// shadowGenerator.blurKernel = 32;
+	// models.forEach(model => {
+	// 	shadowGenerator.addShadowCaster(model);
+	// 	model.receiveShadows = true;
+	// });
+	// light.autoCalcShadowZBounds = true;
 	setBabylonProjectStates(prevState => ({
 		...prevState,
 		state: 'ready',
-		shadows: shadowGenerator
+		// shadows: shadowGenerator
+		shadows: null
 	}));
 }
 
@@ -899,7 +900,7 @@ export function addMeshMetadata(
 	linkName?: string
 ) {
 	const meshMetadata: MeshMetadataI = {
-		visibility: visibility || 1,
+		visibility: visibility ?? 1,
 		mainParent: mainParent,
 		mainParentName:
 			parentName ||

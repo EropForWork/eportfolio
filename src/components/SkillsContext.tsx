@@ -132,6 +132,7 @@ export interface GitGraphValueI {
 	parentId: string;
 	position?: Vector3;
 	mesh?: AbstractMesh;
+	visibility?: number;
 }
 
 export type GitGraphValuesType = {
@@ -256,6 +257,23 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				message: 'Add feature B',
 				parentId: 'commit2',
 				position: new Vector3(0.6, 0.5, 0)
+			},
+			commit5: {
+				message: 'Fix bug in feature B',
+				parentId: 'commit4',
+				visibility: 0
+			},
+			commit6: {
+				message: 'Merge feature B',
+				parentId: 'commit3',
+				position: new Vector3(0, 1.1, 0),
+				visibility: 0
+			},
+			commit7: {
+				message: '',
+				parentId: 'commit5',
+				position: new Vector3(-0.6, 0, 0),
+				visibility: 0
 			}
 		}),
 		[]
@@ -420,6 +438,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					beta: Tools.ToRadians(85),
 					radius: 6
 				}
+			},
+			{
+				modelName: 'buttons.gltf',
+				linkName: 'gitButtons',
+				position: new Vector3(1.4, 2, 0),
+				rotation: new Vector3(Tools.ToRadians(270), 0, 0),
+				scaling: new Vector3(0.015, 0.015, -0.015),
+				visibility: 1
 			}
 		],
 		[]
@@ -610,7 +636,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					context.fillStyle = bgColor;
 					context.fillRect(0, 0, 1024, 1024);
 					dynamicTexture.update();
-					Object.keys(drowedPoints).forEach(key => delete drowedPoints[key]);
+					drowedPoints.clear();
 					drawnLines.clear();
 				});
 
@@ -654,6 +680,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			if (!mesh) {
 				return;
 			}
+			let cameraProps: CameraPropsI | null = null;
 			startingLoadingModels.forEach(modelObject => {
 				const mesh = loadedNodes[modelObject.linkName]?.node;
 				if (!mesh) {
@@ -667,12 +694,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					modelObject.cameraProps &&
 					babylonProjectStates.camera
 				) {
-					setCameraProps({
-						target: modelObject.cameraProps.target,
-						alpha: modelObject.cameraProps.alpha,
-						beta: modelObject.cameraProps.beta,
-						radius: modelObject.cameraProps.radius
-					});
+					cameraProps = modelObject.cameraProps;
 				}
 			});
 			Object.entries(meshStartingPropsObject).forEach(([, value]) => {
@@ -690,13 +712,49 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					value.cameraProps &&
 					babylonProjectStates.camera
 				) {
-					setCameraProps({
-						target: value.cameraProps.target,
-						alpha: value.cameraProps.alpha,
-						beta: value.cameraProps.beta,
-						radius: value.cameraProps.radius
-					});
+					cameraProps = value.cameraProps;
 				}
+			});
+
+			const rootStyles = getComputedStyle(document.documentElement);
+			const bgColor =
+				rootStyles.getPropertyValue('--button-bg') || 'rgba(255, 255, 255, 1)';
+
+			Object.entries(graphicModelsNames).forEach(([name]) => {
+				const mesh: AbstractMesh = loadedNodes[name]?.node as AbstractMesh;
+				if (!mesh) {
+					return;
+				}
+				changeMeshVisibility(mesh, meshName === mesh.name ? 1 : 0);
+				const dynamicTexture = (mesh.material as StandardMaterial)
+					?.diffuseTexture as DynamicTexture;
+				const context = dynamicTexture?.getContext();
+
+				if (!context) {
+					return;
+				}
+				context.fillStyle = bgColor;
+				context.fillRect(0, 0, 1024, 1024);
+				dynamicTexture.update();
+				drowedPoints.clear();
+				drawnLines.clear();
+			});
+
+			const commitModel: AbstractMesh = loadedNodes['commitModel']
+				?.node as AbstractMesh;
+			if (!commitModel) {
+				return;
+			}
+			changeMeshVisibility(commitModel, commitModel.name === meshName ? 1 : 0);
+
+			if (cameraProps === null) {
+				cameraProps = startingCameraProps;
+			}
+			setCameraProps({
+				target: cameraProps.target,
+				alpha: cameraProps.alpha,
+				beta: cameraProps.beta,
+				radius: cameraProps.radius
 			});
 
 			setSelectedProgramm('');

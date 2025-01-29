@@ -30,7 +30,8 @@ interface drowedPointsI {
 	[key: string]: drowedPointI;
 }
 
-export const drowedPoints: drowedPointsI = {};
+// export const drowedPoints: drowedPointsI = {};
+export const drowedPoints = new Map<string, drowedPointI>();
 export const drawnLines = new Set<string>();
 
 export const createGraphicModels = async (
@@ -158,44 +159,36 @@ const createVectorSphere = (
 				5,
 				rootStyles
 			);
-			const drawnKeys = Object.keys(drowedPoints);
-			if (drawnKeys.length > 1) {
-				const connections = [
-					['0', '1'],
-					['0', '3'],
-					['1', '2'],
-					['2', '3']
-				];
 
-				connections.forEach(([start, end]) => {
-					if (drawnKeys.includes(start) && drawnKeys.includes(end)) {
-						const startPoint = drowedPoints[start];
-						const endPoint = drowedPoints[end];
-						const lineKey = `${start}-${end}`;
-						if (
-							startPoint &&
-							endPoint &&
-							'x' in startPoint &&
-							'y' in startPoint &&
-							'x' in endPoint &&
-							'y' in endPoint
-						) {
-							if (!drawnLines.has(lineKey)) {
-								drawLineOnTexture(
-									canvasTexture,
-									startPoint.x,
-									startPoint.y,
-									endPoint.x,
-									endPoint.y,
-									5,
-									rootStyles
-								);
+			const pointsArray = Array.from(drowedPoints.values());
+			if (pointsArray.length > 1) {
+				const lastPoint = pointsArray[pointsArray.length - 1];
+				const prevPoint = pointsArray[pointsArray.length - 2];
 
-								drawnLines.add(lineKey);
-							}
-						}
-					}
-				});
+				// Рисуем линию между последней и предпоследней точкой
+				drawLineOnTexture(
+					canvasTexture,
+					prevPoint.x,
+					prevPoint.y,
+					lastPoint.x,
+					lastPoint.y,
+					5,
+					rootStyles
+				);
+
+				// Если это четвёртая точка, рисуем линию между четвёртой и первой
+				if (pointsArray.length === 4) {
+					const firstPoint = pointsArray[0];
+					drawLineOnTexture(
+						canvasTexture,
+						lastPoint.x,
+						lastPoint.y,
+						firstPoint.x,
+						firstPoint.y,
+						5,
+						rootStyles
+					);
+				}
 			}
 		})
 	);
@@ -265,7 +258,8 @@ const drawPointOnTexture = (
 	context.fill();
 	context.closePath();
 	texture.update();
-	drowedPoints[indexName] = { x: x, y: y };
+	// drowedPoints[indexName] = { x: x, y: y };
+	drowedPoints.set(indexName, { x: x, y: y });
 };
 
 const drawLineOnTexture = (
@@ -277,6 +271,8 @@ const drawLineOnTexture = (
 	width: number = 5,
 	rootStyles: CSSStyleDeclaration
 ) => {
+	console.log(x1, y1, x2, y2);
+
 	const color =
 		rootStyles.getPropertyValue('--button-text') || 'rgba(255, 0, 0, 1)';
 	const context = texture.getContext();

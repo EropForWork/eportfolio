@@ -25,13 +25,13 @@ export function buildCommitTree(
 		rootStyles.getPropertyValue('--button-text') || 'rgba(0, 0, 0, 1)'
 	);
 	const meshContainer = new Mesh('commitModel', scene);
-	meshContainer.position = new Vector3(0, 1.5, 0);
+	meshContainer.position = new Vector3(0, 0.01, 0);
 	meshContainer.scaling = new Vector3(1.5, 1.5, 1.5);
 
 	addMeshMetadata(
 		meshContainer,
 		modelGroups,
-		1,
+		0,
 		meshContainer,
 		meshContainer.name,
 		meshContainer.name
@@ -48,6 +48,15 @@ export function buildCommitTree(
 			commits,
 			lineColor
 		);
+		addMeshMetadata(
+			commitMap[name],
+			modelGroups,
+			value.visibility && 1,
+			meshContainer,
+			meshContainer.name,
+			meshContainer.name
+		);
+		console.log(commitMap[name].metadata);
 	});
 
 	Object.entries(commits).forEach(([name, value]) => {
@@ -60,10 +69,17 @@ export function buildCommitTree(
 			);
 		}
 	});
+
+	const gitButtons = scene.meshes.find(mesh => mesh.name === 'gitButtons');
+	if (gitButtons) {
+		gitButtons.parent = meshContainer;
+		console.log(gitButtons);
+	}
+
 	return meshContainer;
 }
 
-export function createCommitNode(
+function createCommitNode(
 	scene: Scene,
 	parent: AbstractMesh,
 	name: string,
@@ -102,6 +118,18 @@ export function createCommitNode(
 	return sphere;
 }
 
+function createCommitLink(
+	scene: Scene,
+	commitNode: AbstractMesh,
+	parentCommitNode: AbstractMesh,
+	color3: Color3
+) {
+	const points = [commitNode.position, parentCommitNode.position];
+	const lines = MeshBuilder.CreateLines('lines', { points: points }, scene);
+	lines.color = color3;
+	lines.parent = commitNode.parent;
+}
+
 function calculatePosition(
 	commit: GitGraphValueI,
 	commits: GitGraphValuesType
@@ -122,16 +150,4 @@ function calculatePosition(
 	}
 
 	return new Vector3(0, 0, 0);
-}
-
-export function createCommitLink(
-	scene: Scene,
-	commitNode: AbstractMesh,
-	parentCommitNode: AbstractMesh,
-	color3: Color3
-) {
-	const points = [commitNode.position, parentCommitNode.position];
-	const lines = MeshBuilder.CreateLines('lines', { points: points }, scene);
-	lines.color = color3;
-	lines.parent = commitNode.parent;
 }
