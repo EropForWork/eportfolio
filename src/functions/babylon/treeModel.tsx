@@ -17,6 +17,7 @@ import {
 } from '../../components/SkillsContext';
 import {
 	addMeshMetadata,
+	animateMeshProperty,
 	changeMeshVisibility,
 	ModelGroupsI,
 	toColor3
@@ -129,13 +130,13 @@ export function buildCommitTree(
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
 					if (button.metadata?.clicks < button.metadata?.clickActions.length) {
-						button.position.x = -0.28;
+						animateMeshProperty(button, 'position', 'x', -0.28, 0.3);
 					}
 				})
 			);
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPointerOutTrigger, () => {
-					button.position.x = -0.327;
+					animateMeshProperty(button, 'position', 'x', -0.327, 0.3);
 				})
 			);
 			button.metadata.clickActions = [
@@ -143,12 +144,10 @@ export function buildCommitTree(
 				{ name: 'merge', nodes: ['commit6', 'commit7'] }
 			];
 			button.metadata.clicks = 0;
-			//TODO Подчищать clicks при клике на любой скил или программу
-			// запускать изменение меша названия кнопки changeBtnText
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
 					if (button.metadata?.clicks < button.metadata?.clickActions.length) {
-						button.position.x = -0.15;
+						animateMeshProperty(button, 'position', 'x', -0.15, 0.2);
 						gitBtnClick(button, commitMap);
 					}
 				})

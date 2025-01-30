@@ -917,3 +917,32 @@ export function addMeshMetadata(
 	};
 	mesh.metadata = meshMetadata;
 }
+
+export function animateMeshProperty(
+	mesh: AbstractMesh | Mesh,
+	property: 'position' | 'rotation',
+	axis: 'x' | 'y' | 'z',
+	targetValue: number,
+	duration: number = 1
+) {
+	const fps = 60;
+	const totalFrames = fps * duration;
+
+	const animation = new Animation(
+		`animate_${property}_${axis}`,
+		`${property}.${axis}`,
+		fps,
+		Animation.ANIMATIONTYPE_FLOAT,
+		Animation.ANIMATIONLOOPMODE_CONSTANT
+	);
+
+	const keys = [
+		{ frame: 0, value: mesh[property][axis] },
+		{ frame: totalFrames, value: targetValue }
+	];
+
+	animation.setKeys(keys);
+
+	mesh.animations.push(animation);
+	mesh.getScene().beginAnimation(mesh, 0, totalFrames, false);
+}
