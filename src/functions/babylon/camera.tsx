@@ -121,6 +121,6 @@ export const moveCamera = (
 		animationGroup.dispose();
 	});
 	// TODO Включить перед продом
-	// animationGroup.start(true);
-	animationGroup.start(false);
+	animationGroup.start(true);
+	// animationGroup.start(false);
 };

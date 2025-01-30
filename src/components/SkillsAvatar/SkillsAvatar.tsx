@@ -32,7 +32,8 @@ function SkillsAvatar() {
 		setOveredMesh,
 		graphicModelsNames,
 		registerActionsModelsNames,
-		gitGraphValues
+		gitGraphValues,
+		removeNode
 	} = useSkillsContext();
 
 	const { state, engine, scene, light, models } = babylonProjectStates;
@@ -89,7 +90,8 @@ function SkillsAvatar() {
 				setBabylonProjectStates,
 				setOveredMesh,
 				registerActionsModelsNames,
-				modelGroups
+				modelGroups,
+				removeNode
 			),
 		processed: () =>
 			light && models && createShadows(light, models, setBabylonProjectStates),

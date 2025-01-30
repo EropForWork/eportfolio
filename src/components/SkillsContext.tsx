@@ -176,6 +176,7 @@ interface SkillsContextType {
 			node: Node | AbstractMesh | Mesh | TransformNode;
 		}
 	) => void;
+	removeNode: (key: string) => void;
 	startingTooltips: MeshTooltip[];
 	startingLoadingModels: loadingModelProps[];
 	startingCameraProps: CameraPropsI;
@@ -569,6 +570,17 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		[]
 	);
 
+	const removeNode = useCallback((key: string) => {
+		setLoadedNodes(prev => {
+			if (!(key in prev)) return prev;
+
+			const updatedNodes = { ...prev };
+			delete updatedNodes[key];
+
+			return updatedNodes;
+		});
+	}, []);
+
 	useEffect(() => {
 		if (cameraProps && babylonProjectStates.camera) {
 			moveCamera(babylonProjectStates.camera, cameraProps.target, {
@@ -816,6 +828,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			meshStartingPropsObject,
 			loadedNodes,
 			addNode,
+			removeNode,
 			startingTooltips,
 			startingLoadingModels,
 			startingCameraProps,
@@ -836,7 +849,6 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			setBabylonProjectStates,
 			setCameraProps,
 			loadedNodes,
-			addNode,
 			overedMesh
 		]
 	);

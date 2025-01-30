@@ -344,10 +344,10 @@ export async function createScene(
 	const sceneMetadata: SceneMetadataI = {};
 	scene.metadata = sceneMetadata;
 	if (scene.isReady()) {
-		scene.debugLayer.show({
-			handleResize: false,
-			overlay: true
-		});
+		// scene.debugLayer.show({
+		// 	handleResize: false,
+		// 	overlay: true
+		// });
 		setBabylonProjectStates(prevState => ({
 			...prevState,
 			scene: scene
@@ -450,7 +450,8 @@ export async function processingUserModels(
 	>,
 	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>,
 	registerActionsModelsNames: string[],
-	modelGroups: ModelGroupsI
+	modelGroups: ModelGroupsI,
+	removeNode: (key: string) => void
 ) {
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
@@ -512,6 +513,7 @@ export async function processingUserModels(
 		if (!mesh) {
 			return;
 		}
+		removeNode(name);
 		mesh.name = value.linkName;
 		addMeshMetadata(
 			mesh as AbstractMesh,
@@ -521,6 +523,16 @@ export async function processingUserModels(
 			mesh.name.toLocaleLowerCase(),
 			value.linkName
 		);
+		mesh.getChildMeshes().forEach(child => {
+			addMeshMetadata(
+				child as AbstractMesh,
+				modelGroups,
+				value.visibility ? value.visibility : 1,
+				mesh as AbstractMesh,
+				mesh.name.toLocaleLowerCase(),
+				value.linkName
+			);
+		});
 		addNode(mesh.name, { node: mesh });
 	});
 
@@ -916,6 +928,7 @@ export function addMeshMetadata(
 		currentTheme: localStorage.getItem('theme') || 'default'
 	};
 	mesh.metadata = meshMetadata;
+	console.log(mesh.name, mesh.metadata);
 }
 
 export function animateMeshProperty(
