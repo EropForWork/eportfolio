@@ -550,9 +550,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 		() => hardSkills.flatMap(skill => skill.items),
 		[hardSkills]
 	);
-	const [loadedNodes, setLoadedNodes] = useState<
-		Record<string, { node: Node | AbstractMesh | Mesh | TransformNode }>
-	>({});
+	const [loadedNodes, setLoadedNodes] = useState<LoadedNodesType>({});
 
 	const addNode = useCallback(
 		(

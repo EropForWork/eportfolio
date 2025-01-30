@@ -128,7 +128,9 @@ export function buildCommitTree(
 			button.actionManager = new ActionManager(scene);
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
-					button.position.x = -0.3;
+					if (button.metadata?.clicks < button.metadata?.clickActions.length) {
+						button.position.x = -0.28;
+					}
 				})
 			);
 			button.actionManager.registerAction(
@@ -145,8 +147,10 @@ export function buildCommitTree(
 			// запускать изменение меша названия кнопки changeBtnText
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-					button.position.x = -0.15;
-					gitBtnClick(button, commitMap);
+					if (button.metadata?.clicks < button.metadata?.clickActions.length) {
+						button.position.x = -0.15;
+						gitBtnClick(button, commitMap);
+					}
 				})
 			);
 		}
@@ -313,8 +317,10 @@ function changeGitBtnText(mesh: AbstractMesh) {
 		if (newTextMesh) {
 			newTextMesh.parent = textMesh.parent;
 			newTextMesh.position = textMesh.position;
+			newTextMesh.position.y = btnName === 'merge' ? 0.235 : 0.33;
 			newTextMesh.rotation = textMesh.rotation;
 			newTextMesh.scaling = textMesh.scaling;
+			newTextMesh.visibility = mesh.metadata.visibility;
 			newTextMesh.metadata = { ...textMesh.metadata };
 			textMesh.dispose();
 		}
