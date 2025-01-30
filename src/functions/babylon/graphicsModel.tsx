@@ -30,7 +30,6 @@ interface drowedPointsI {
 	[key: string]: drowedPointI;
 }
 
-// export const drowedPoints: drowedPointsI = {};
 export const drowedPoints = new Map<string, drowedPointI>();
 export const drawnLines = new Set<string>();
 
@@ -165,7 +164,6 @@ const createVectorSphere = (
 				const lastPoint = pointsArray[pointsArray.length - 1];
 				const prevPoint = pointsArray[pointsArray.length - 2];
 
-				// Рисуем линию между последней и предпоследней точкой
 				drawLineOnTexture(
 					canvasTexture,
 					prevPoint.x,
@@ -176,7 +174,6 @@ const createVectorSphere = (
 					rootStyles
 				);
 
-				// Если это четвёртая точка, рисуем линию между четвёртой и первой
 				if (pointsArray.length === 4) {
 					const firstPoint = pointsArray[0];
 					drawLineOnTexture(
@@ -258,7 +255,6 @@ const drawPointOnTexture = (
 	context.fill();
 	context.closePath();
 	texture.update();
-	// drowedPoints[indexName] = { x: x, y: y };
 	drowedPoints.set(indexName, { x: x, y: y });
 };
 

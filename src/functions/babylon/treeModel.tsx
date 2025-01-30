@@ -146,9 +146,12 @@ export function buildCommitTree(
 			button.metadata.clicks = 0;
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
-					if (button.metadata?.clicks < button.metadata?.clickActions.length) {
+					if (button.metadata.clicks < button.metadata?.clickActions.length) {
 						animateMeshProperty(button, 'position', 'x', -0.15, 0.2);
 						gitBtnClick(button, commitMap);
+					}
+					if (button.metadata.clicks === button.metadata?.clickActions.length) {
+						changeGitBtnText(button, 'DONE!');
 					}
 				})
 			);
@@ -294,14 +297,14 @@ export function changeGitBtnClicks(
 	if (reset) {
 		btnMesh.metadata.clicks = 0;
 	} else {
-		btnMesh.metadata.clicks++;
+		++btnMesh.metadata.clicks;
 	}
-
 	changeGitBtnText(btnMesh);
 }
 
-function changeGitBtnText(mesh: AbstractMesh) {
-	const btnName: string = mesh.metadata.clickActions[mesh.metadata.clicks]?.name;
+function changeGitBtnText(mesh: AbstractMesh, newtext: string = '') {
+	const btnName: string =
+		mesh.metadata.clickActions[mesh.metadata.clicks]?.name || newtext;
 	if (!btnName) {
 		return;
 	}
@@ -312,7 +315,7 @@ function changeGitBtnText(mesh: AbstractMesh) {
 		return;
 	}
 
-	create3dText(btnName, mesh.getScene(), 0.3).then(newTextMesh => {
+	create3dText(newtext || btnName, mesh.getScene(), 0.3).then(newTextMesh => {
 		if (newTextMesh) {
 			newTextMesh.parent = textMesh.parent;
 			newTextMesh.position = textMesh.position;
