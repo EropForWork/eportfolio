@@ -145,10 +145,11 @@ export function buildCommitTree(
 			];
 			button.metadata.clicks = 0;
 			button.actionManager.registerAction(
-				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
+				new ExecuteCodeAction(ActionManager.OnPickTrigger, async () => {
 					if (button.metadata.clicks < button.metadata?.clickActions.length) {
-						animateMeshProperty(button, 'position', 'x', -0.15, 0.2);
 						gitBtnClick(button, commitMap);
+						await animateMeshProperty(button, 'position', 'x', -0.15, 0.2);
+						animateMeshProperty(button, 'position', 'x', -0.327, 0.2);
 					}
 					if (button.metadata.clicks === button.metadata?.clickActions.length) {
 						changeGitBtnText(button, 'DONE!');

@@ -65,6 +65,15 @@ export interface ModelGroupsI {
 	};
 }
 
+/**
+ * Изменяет видимость меша и его дочерних элементов.
+ *
+ * @param {Node} node - Меш, видимость которого нужно изменить.
+ * @param {number} propVisibility - Желаемая видимость (от 0 до 1).
+ * @param {boolean} [saveVisibility=true] - Сохранять ли текущую видимость в метаданных.
+ * @param {number} [duration=300] - Длительность анимации в миллисекундах.
+ * @param {boolean} [force=false] - Принудительно использовать заданную видимость.
+ */
 export const changeMeshVisibility = (
 	node: Node,
 	propVisibility: number,
@@ -126,6 +135,14 @@ export const changeMeshVisibility = (
 	});
 };
 
+/**
+ * Загружает модели в сцену Babylon.js.
+ *
+ * @param {loadingModelProps[]} startingModels - Массив свойств для загрузки моделей.
+ * @param {Scene} scene - Сцена Babylon.js, в которую будут загружены модели.
+ * @param {ModelGroupsI} modelGroups - Объект групп моделей.
+ * @returns {Promise<AbstractMesh[]>} - Промис, который разрешается массивом загруженных мешей.
+ */
 export const loadModels = async (
 	startingModels: loadingModelProps[],
 	scene: Scene,
@@ -196,7 +213,7 @@ export const loadModels = async (
 	return loadedModels.filter((model): model is AbstractMesh => model !== null);
 };
 
-export const addCycleMeshAnimation = (
+const addCycleMeshAnimation = (
 	mesh: Node,
 	scene: Scene,
 	options: animationOptionsI = {}
@@ -228,109 +245,13 @@ export const addCycleMeshAnimation = (
 	scene.beginAnimation(mesh, 0, 60, true, 60 / (speed * 60));
 };
 
-export const meshLookAtCamera = (mesh: Node): void => {
-	const scene = mesh.getScene();
-	const camera = scene.activeCamera;
-	if (camera) {
-		const observer = camera.getScene().onBeforeRenderObservable.add(() => {
-			(mesh as AbstractMesh).lookAt(camera.position);
-		});
-
-		scene.onDisposeObservable.add(() => {
-			scene.onBeforeRenderObservable.remove(observer);
-		});
-	}
-};
-
-export function triggerMouseMeshLogic(
-	type: string,
-	mesh: AbstractMesh,
-	startingTooltips: MeshTooltip[],
-	loadedNodes: LoadedNodesType,
-	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
-) {
-	const scene = mesh?.getScene();
-	if (!mesh || !scene) {
-		return;
-	}
-	if (type === 'OnPointerOverTrigger') {
-		revialTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
-		const rootStyles = getComputedStyle(document.documentElement);
-		const color3 =
-			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
-			new Color3(255, 0, 0);
-		changeMeshOverlayAlpha(mesh, 0.9, 0.3, color3);
-		if (mesh.metadata.mainParentName) {
-			stopCycleAnimation(scene, mesh.metadata.mainParentName, loadedNodes);
-		}
-		setOveredMesh(mesh);
-	}
-	if (type === 'OnPointerOutTrigger') {
-		hideTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
-		const rootStyles = getComputedStyle(document.documentElement);
-		const color3 =
-			hexToColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
-			new Color3(255, 0, 0);
-		changeMeshOverlayAlpha(mesh, 0, 0.3, color3);
-		if (mesh.metadata.mainParentName) {
-			resumeCycleAnimation(mesh.metadata.mainParentName, loadedNodes);
-		}
-		setOveredMesh(null);
-	}
-	if (type === 'OnPickUpTrigger') {
-		bounceModelAnimation(mesh);
-	}
-
-	function changeMeshOverlayAlpha(
-		mesh: AbstractMesh,
-		to: number | 1,
-		duration: number | 1,
-		color?: Color3
-	) {
-		mesh.renderOverlay = true;
-		mesh.overlayColor = color || new Color3(255, 0, 0);
-		const animationFn = animateValue(mesh.overlayAlpha, to, duration * 1000);
-		const startTime = performance.now();
-
-		const updateOverlay = () => {
-			const currentTime = performance.now();
-			const elapsed = currentTime - startTime;
-			mesh.overlayAlpha = animationFn(elapsed);
-
-			if (elapsed < duration * 1000) {
-				requestAnimationFrame(updateOverlay);
-			} else {
-				mesh.overlayAlpha = to;
-			}
-		};
-
-		updateOverlay();
-	}
-
-	function bounceModelAnimation(mesh: AbstractMesh) {
-		const animation = new Animation(
-			'scaleAnimation',
-			'scaling',
-			30,
-			Animation.ANIMATIONTYPE_VECTOR3,
-			Animation.ANIMATIONLOOPMODE_CONSTANT
-		);
-		animation.setKeys([
-			{ frame: 0, value: mesh.scaling },
-			{ frame: 30, value: mesh.scaling.scale(0.9) },
-			{ frame: 60, value: mesh.scaling }
-		]);
-
-		const easing = new BABYLON.QuadraticEase();
-		easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
-
-		animation.setEasingFunction(easing);
-
-		mesh.animations.push(animation);
-		mesh.getScene().beginAnimation(mesh, 0, 60, false, 20);
-	}
-}
-
+/**
+ * Создает сцену Babylon.js.
+ *
+ * @param {Engine} engine - Движок Babylon.js, используемый для создания сцены.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ * @param {CameraPropsI} startingCameraProps - Свойства для создания камеры.
+ */
 export async function createScene(
 	engine: Engine,
 	setBabylonProjectStates: React.Dispatch<
@@ -365,6 +286,12 @@ export async function createScene(
 	}
 }
 
+/**
+ * Создает источник света в сцене Babylon.js.
+ *
+ * @param {Scene} scene - Сцена Babylon.js, в которой будет создан источник света.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ */
 export function createLight(
 	scene: Scene,
 	setBabylonProjectStates: React.Dispatch<
@@ -392,6 +319,16 @@ export function createLight(
 	}));
 }
 
+/**
+ * Загружает пользовательские модели в сцену Babylon.js.
+ *
+ * @param {loadingModelProps[]} startingLoadingModels - Массив свойств для загрузки моделей.
+ * @param {Scene} scene - Сцена Babylon.js, в которой будут загружены модели.
+ * @param {ModelGroupsI} modelGroups - Объект групп имен моделей.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ * @param {GraphicsModelsT} graphicModelsNames - Имена графических моделей для создания.
+ * @param {GitGraphValuesType} gitGraphValues - Значения для построения графа коммитов.
+ */
 export async function loadUserModels(
 	startingLoadingModels: loadingModelProps[],
 	scene: Scene,
@@ -430,6 +367,22 @@ export async function loadUserModels(
 	}));
 }
 
+/**
+ * Обрабатывает пользовательские модели в сцене Babylon.js.
+ *
+ * @param {Scene} scene - Сцена Babylon.js, в которой находятся модели.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы.
+ * @param {(Mesh | AbstractMesh)[]} modelsArray - Массив моделей, которые нужно обработать.
+ * @param {MeshTooltip[]} startingTooltips - Массив объектов подсказок.
+ * @param {string[]} loadingAnimationModelsNames - Массив имен моделей, для которых нужно добавить анимацию загрузки.
+ * @param {{ [key: string]: meshStartingProps }} meshStartingPropsObject - Объект начальных свойств для моделей.
+ * @param {(key: string, value: { node: Node | AbstractMesh | Mesh | TransformNode }) => void} addNode - Функция для добавления узла в loadedNodes.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ * @param {React.Dispatch<React.SetStateAction<AbstractMesh | null>>} setOveredMesh - Функция для обновления состояния меша, над которым находится указатель мыши.
+ * @param {string[]} registerActionsModelsNames - Массив имен моделей, для которых нужно зарегистрировать действия.
+ * @param {ModelGroupsI} modelGroups - Объект групп имен моделей.
+ * @param {(key: string) => void} removeNode - Функция для удаления узла из loadedNodes.
+ */
 export async function processingUserModels(
 	scene: Scene,
 	loadedNodes: LoadedNodesType,
@@ -453,6 +406,25 @@ export async function processingUserModels(
 	modelGroups: ModelGroupsI,
 	removeNode: (key: string) => void
 ) {
+	/**
+	 * Направляет меш на камеру перед каждым рендерингом.
+	 *
+	 * @param {Node} mesh - Меш, который должен смотреть на камеру.
+	 */
+	const meshLookAtCamera = (mesh: Node): void => {
+		const scene = mesh.getScene();
+		const camera = scene.activeCamera;
+		if (camera) {
+			const observer = camera.getScene().onBeforeRenderObservable.add(() => {
+				(mesh as AbstractMesh).lookAt(camera.position);
+			});
+
+			scene.onDisposeObservable.add(() => {
+				scene.onBeforeRenderObservable.remove(observer);
+			});
+		}
+	};
+
 	createMeshTooltips(modelsArray, scene, startingTooltips, loadedNodes);
 
 	registerActionsModelsNames.forEach(modelName => {
@@ -543,6 +515,112 @@ export async function processingUserModels(
 	}));
 }
 
+/**
+ * Выполняет логику при взаимодействии мыши с мешом.
+ *
+ * @param {string} type - Тип триггера (например, 'OnPointerOverTrigger').
+ * @param {AbstractMesh} mesh - Меш, с которым происходит взаимодействие.
+ * @param {MeshTooltip[]} startingTooltips - Массив объектов подсказок.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы.
+ * @param {React.Dispatch<React.SetStateAction<AbstractMesh | null>>} setOveredMesh - Функция для обновления состояния меша, над которым находится указатель мыши.
+ */
+export function triggerMouseMeshLogic(
+	type: string,
+	mesh: AbstractMesh,
+	startingTooltips: MeshTooltip[],
+	loadedNodes: LoadedNodesType,
+	setOveredMesh: React.Dispatch<React.SetStateAction<AbstractMesh | null>>
+) {
+	const scene = mesh?.getScene();
+	if (!mesh || !scene) {
+		return;
+	}
+	if (type === 'OnPointerOverTrigger') {
+		revialTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
+		const rootStyles = getComputedStyle(document.documentElement);
+		const color3 =
+			toColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
+			new Color3(255, 0, 0);
+		changeMeshOverlayAlpha(mesh, 0.9, 0.3, color3);
+		if (mesh.metadata.mainParentName) {
+			stopCycleAnimation(scene, mesh.metadata.mainParentName, loadedNodes);
+		}
+		setOveredMesh(mesh);
+	} else if (type === 'OnPointerOutTrigger') {
+		hideTooltip(scene, mesh.metadata.linkName, startingTooltips, loadedNodes);
+		const rootStyles = getComputedStyle(document.documentElement);
+		const color3 =
+			toColor3(rootStyles.getPropertyValue('--button-hover-bg')) ||
+			new Color3(255, 0, 0);
+		changeMeshOverlayAlpha(mesh, 0, 0.3, color3);
+		if (mesh.metadata.mainParentName) {
+			resumeCycleAnimation(mesh.metadata.mainParentName, loadedNodes);
+		}
+		setOveredMesh(null);
+	} else if (type === 'OnPickUpTrigger') {
+		bounceModelAnimation(mesh);
+	} else {
+		return;
+	}
+
+	function changeMeshOverlayAlpha(
+		mesh: AbstractMesh,
+		to: number | 1,
+		duration: number | 1,
+		color?: Color3
+	) {
+		mesh.renderOverlay = true;
+		mesh.overlayColor = color || new Color3(255, 0, 0);
+		const animationFn = animateValue(mesh.overlayAlpha, to, duration * 1000);
+		const startTime = performance.now();
+
+		const updateOverlay = () => {
+			const currentTime = performance.now();
+			const elapsed = currentTime - startTime;
+			mesh.overlayAlpha = animationFn(elapsed);
+
+			if (elapsed < duration * 1000) {
+				requestAnimationFrame(updateOverlay);
+			} else {
+				mesh.overlayAlpha = to;
+			}
+		};
+
+		updateOverlay();
+	}
+
+	function bounceModelAnimation(mesh: AbstractMesh) {
+		const animation = new Animation(
+			'scaleAnimation',
+			'scaling',
+			30,
+			Animation.ANIMATIONTYPE_VECTOR3,
+			Animation.ANIMATIONLOOPMODE_CONSTANT
+		);
+		animation.setKeys([
+			{ frame: 0, value: mesh.scaling },
+			{ frame: 30, value: mesh.scaling.scale(0.9) },
+			{ frame: 60, value: mesh.scaling }
+		]);
+
+		const easing = new BABYLON.QuadraticEase();
+		easing.setEasingMode(BABYLON.EasingFunction.EASINGMODE_EASEINOUT);
+
+		animation.setEasingFunction(easing);
+
+		mesh.animations.push(animation);
+		mesh.getScene().beginAnimation(mesh, 0, 60, false, 20);
+	}
+}
+
+/**
+ * Создает подсказки для массива мешей.
+ *
+ * @param {AbstractMesh[]} modelsArray - Массив мешей, для которых создаются подсказки.
+ * @param {Scene} scene - Сцена Babylon.js, в которой будут отображаться подсказки.
+ * @param {MeshTooltip[]} startingTooltips - Массив объектов подсказок.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы.
+ */
 function createMeshTooltips(
 	modelsArray: AbstractMesh[],
 	scene: Scene,
@@ -585,6 +663,12 @@ export function createShadows(
 	}));
 }
 
+/**
+ * Создает экземпляр движка Babylon.js.
+ *
+ * @param {HTMLCanvasElement} canvas - Элемент canvas, на котором будет работать движок.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ */
 export function createEngine(
 	canvas: HTMLCanvasElement,
 	setBabylonProjectStates: React.Dispatch<
@@ -602,6 +686,12 @@ export function createEngine(
 	}));
 }
 
+/**
+ * Запускает рендеринг сцены Babylon.js.
+ * @param {babylonProjectStatesI} babylonProjectStates - Состояние проекта Babylon.js, включающее движок и сцену.
+ * @param {React.Dispatch<React.SetStateAction<babylonProjectStatesI>>} setBabylonProjectStates - Функция для обновления состояния проекта Babylon.js.
+ * @returns {void}
+ */
 export function startRenderScene(
 	babylonProjectStates: babylonProjectStatesI,
 	setBabylonProjectStates: React.Dispatch<
@@ -625,6 +715,15 @@ export function startRenderScene(
 	}));
 }
 
+/**
+ * Добавляет менеджер действий к мешу и её дочерним элементам.
+ *
+ * @param {AbstractMesh} model - Меш, к которой добавляется менеджер действий.
+ * @param {string[]} actionManagerTypes - Массив строк, представляющих типы действий.
+ * @param {MeshTooltip[]} startingTooltips - Массив подсказок для мешей.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы.
+ * @param {React.Dispatch<React.SetStateAction<AbstractMesh | null>>} setOveredMesh - Функция для обновления состояния наведённого меша.
+ */
 function addActionManagerToMesh(
 	model: AbstractMesh,
 	actionManagerTypes: string[],
@@ -663,6 +762,13 @@ function addActionManagerToMesh(
 	});
 }
 
+/**
+ * Создает подсказку для меша.
+ *
+ * @param {AbstractMesh} mesh - Меш, для которого создается подсказка.
+ * @param {MeshTooltip} tooltipObject - Объект подсказки.
+ * @param {GUI.AdvancedDynamicTexture} advancedTexture - Главная динамическая текстура для отображения подсказки.
+ */
 function createMeshTooltip(
 	mesh: AbstractMesh,
 	tooltipObject: MeshTooltip,
@@ -719,6 +825,14 @@ function createMeshTooltip(
 	});
 }
 
+/**
+ * Устанавливает видимость текущего GUI-элемента (тултипа) с анимацией изменения прозрачности.
+ *
+ * @param {string} meshName - Имя меша, связанного с тултипом.
+ * @param {number} visibility - Целевое значение прозрачности (0 - скрыто, 1 - полностью видно).
+ * @param {Scene} scene - Сцена Babylon.js, содержащая GUI.
+ * @param {number} [duration=300] - Длительность анимации изменения прозрачности в миллисекундах.
+ */
 export function setVisibleCurrentGUI(
 	meshName: string,
 	visibility: number,
@@ -763,6 +877,13 @@ export function setVisibleCurrentGUI(
 	}
 }
 
+/**
+ * Вычисляет ширину текста в пикселях на основе указанного шрифта.
+ *
+ * @param {string} text - Текст, ширину которого необходимо измерить.
+ * @param {string} font - CSS-описание шрифта (например, "16px Arial").
+ * @returns {number} - Ширина текста в пикселях.
+ */
 function getTextWidth(text: string, font: string) {
 	const element = document.createElement('canvas');
 	const context = element.getContext('2d');
@@ -800,6 +921,7 @@ function stopCycleAnimation(
 		}
 	}
 }
+
 function resumeCycleAnimation(meshName: string, loadedNodes: LoadedNodesType) {
 	const mesh = loadedNodes[meshName]?.node;
 	if (mesh && mesh.animations) {
@@ -810,14 +932,14 @@ function resumeCycleAnimation(meshName: string, loadedNodes: LoadedNodesType) {
 	}
 }
 
-function hexToColor3(hex: string): Color3 {
-	const hexValue = hex.replace('#', '');
-	const r = parseInt(hexValue.substring(0, 2), 16) / 255;
-	const g = parseInt(hexValue.substring(2, 4), 16) / 255;
-	const b = parseInt(hexValue.substring(4, 6), 16) / 255;
-	return new Color3(r, g, b);
-}
-
+/**
+ * Восстанавливает (показывает) тултип и изменяет видимость связанного меша, если это необходимо.
+ *
+ * @param {Scene} scene - Сцена Babylon.js.
+ * @param {string} linkName - Уникальное имя объекта, связанного с тултипом.
+ * @param {MeshTooltip[]} startingTooltips - Массив начальных тултипов.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы сцены.
+ */
 export function revialTooltip(
 	scene: Scene,
 	linkName: string,
@@ -846,6 +968,15 @@ export function revialTooltip(
 		}
 	}
 }
+
+/**
+ * Скрывает тултип и восстанавливает первоначальную видимость связанного меша, если это возможно.
+ *
+ * @param {Scene} scene - Сцена Babylon.js.
+ * @param {string} linkName - Уникальное имя объекта, связанного с тултипом.
+ * @param {MeshTooltip[]} startingTooltips - Массив начальных тултипов.
+ * @param {LoadedNodesType} loadedNodes - Объект, содержащий загруженные узлы сцены.
+ */
 export function hideTooltip(
 	scene: Scene,
 	linkName: string,
@@ -873,6 +1004,13 @@ export function hideTooltip(
 	}
 }
 
+/**
+ * Преобразует строку цвета в объект Color3.
+ *
+ * @param {string} colorString - Строка цвета в формате HEX или RGB(A).
+ * @returns {Color3} - Объект Color3, представляющий цвет.
+ * @throws {Error} - Если строка цвета неверного формата.
+ */
 export const toColor3 = (colorString: string): Color3 => {
 	if (colorString.startsWith('#')) {
 		const hex = colorString.slice(1);
@@ -904,6 +1042,16 @@ export const toColor3 = (colorString: string): Color3 => {
 	}
 };
 
+/**
+ * Добавляет метаданные к мешу, включая видимость, родителя, принадлежность к группе и текущую тему.
+ *
+ * @param {AbstractMesh} mesh - Меш, к которому добавляются метаданные.
+ * @param {ModelGroupsI} modelGroups - Объект, содержащий группы имён моделей.
+ * @param {number} [visibility=1] - Начальная видимость меша (по умолчанию 1).
+ * @param {AbstractMesh} [mainParent] - Родительский меш, если есть.
+ * @param {string} [parentName] - Имя родительского меша (если не указано, берется из `mainParent` или `mesh`).
+ * @param {string} [linkName] - Уникальное имя для привязки к группе (если не указано, берется из `mainParent` или `mesh`).
+ */
 export function addMeshMetadata(
 	mesh: AbstractMesh,
 	modelGroups: ModelGroupsI,
@@ -928,34 +1076,49 @@ export function addMeshMetadata(
 		currentTheme: localStorage.getItem('theme') || 'default'
 	};
 	mesh.metadata = meshMetadata;
-	console.log(mesh.name, mesh.metadata);
 }
 
+/**
+ * Анимирует свойство меша (position или rotation) по заданной оси.
+ * Возвращает `Promise`, который выполняется после завершения анимации.
+ *
+ * @param mesh - Анимируемый меш.
+ * @param property - Свойство ('position' или 'rotation').
+ * @param axis - Ось ('x', 'y' или 'z').
+ * @param targetValue - Конечное значение.
+ * @param duration - Длительность анимации в секундах (по умолчанию 1 сек).
+ * @returns `Promise<void>` - Разрешается после завершения анимации.
+ */
 export function animateMeshProperty(
 	mesh: AbstractMesh | Mesh,
 	property: 'position' | 'rotation',
 	axis: 'x' | 'y' | 'z',
 	targetValue: number,
 	duration: number = 1
-) {
-	const fps = 60;
-	const totalFrames = fps * duration;
+): Promise<void> {
+	return new Promise(resolve => {
+		const fps = 60;
+		const totalFrames = fps * duration;
 
-	const animation = new Animation(
-		`animate_${property}_${axis}`,
-		`${property}.${axis}`,
-		fps,
-		Animation.ANIMATIONTYPE_FLOAT,
-		Animation.ANIMATIONLOOPMODE_CONSTANT
-	);
+		const animation = new Animation(
+			`animate_${property}_${axis}`,
+			`${property}.${axis}`,
+			fps,
+			Animation.ANIMATIONTYPE_FLOAT,
+			Animation.ANIMATIONLOOPMODE_CONSTANT
+		);
 
-	const keys = [
-		{ frame: 0, value: mesh[property][axis] },
-		{ frame: totalFrames, value: targetValue }
-	];
+		const keys = [
+			{ frame: 0, value: mesh[property][axis] },
+			{ frame: totalFrames, value: targetValue }
+		];
 
-	animation.setKeys(keys);
+		animation.setKeys(keys);
 
-	mesh.animations.push(animation);
-	mesh.getScene().beginAnimation(mesh, 0, totalFrames, false);
+		mesh.animations.push(animation);
+
+		mesh.getScene().beginAnimation(mesh, 0, totalFrames, false, 1.0, () => {
+			resolve();
+		});
+	});
 }
