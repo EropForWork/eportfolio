@@ -48,6 +48,7 @@ import {
 } from '../functions/babylon/models';
 import { CameraPropsI, moveCamera } from '../functions/babylon/camera';
 import { drawnLines, drowedPoints } from '../functions/babylon/graphicsModel';
+import { changeGitBtnClicks } from '../functions/babylon/treeModel';
 
 export interface loadingModelProps {
 	modelName: string;
@@ -663,6 +664,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 					300,
 					!modelGroup.linkNames.includes('commitModel')
 				);
+				changeGitBtnClicks('Cylinder', true, scene);
 			}
 
 			if (babylonProjectStates.camera && startingCameraProps) {
@@ -785,6 +787,8 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				300,
 				!(commitModel.name === meshName)
 			);
+
+			changeGitBtnClicks('Cylinder', true, scene);
 
 			if (cameraProps === null) {
 				cameraProps = startingCameraProps;

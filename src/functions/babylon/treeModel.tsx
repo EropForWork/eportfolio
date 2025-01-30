@@ -142,7 +142,7 @@ export function buildCommitTree(
 			];
 			button.metadata.clicks = 0;
 			//TODO Подчищать clicks при клике на любой скил или программу
-			// Если 0, то
+			// запускать изменение меша названия кнопки changeBtnText
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPickTrigger, () => {
 					button.position.x = -0.15;
@@ -267,18 +267,56 @@ function gitBtnClick(
 	}
 ) {
 	const clickNames: string[] =
-		clickedMesh.metadata.clickActions[clickedMesh.metadata.clicks].nodes;
+		clickedMesh.metadata.clickActions[clickedMesh.metadata.clicks]?.nodes;
 	if (clickNames) {
 		clickNames.forEach(names => {
 			const mesh = commitMap[names];
 			changeMeshVisibility(mesh, 1, true, 300, true);
 		});
 	}
-	//TODO
-	const btnName: string =
-		clickedMesh.metadata.clickActions[clickedMesh.metadata.clicks].name;
-	console.log(btnName);
 
-	// changeBtnText();
-	clickedMesh.metadata.clicks++;
+	changeGitBtnClicks(clickedMesh);
+}
+
+export function changeGitBtnClicks(
+	mesh: AbstractMesh | string,
+	reset: boolean = false,
+	scene?: Scene
+) {
+	const btnMesh =
+		mesh instanceof AbstractMesh ? mesh : scene?.getMeshByName(mesh);
+	if (!btnMesh) {
+		return;
+	}
+	if (reset) {
+		btnMesh.metadata.clicks = 0;
+	} else {
+		btnMesh.metadata.clicks++;
+	}
+
+	changeGitBtnText(btnMesh);
+}
+
+function changeGitBtnText(mesh: AbstractMesh) {
+	const btnName: string = mesh.metadata.clickActions[mesh.metadata.clicks]?.name;
+	if (!btnName) {
+		return;
+	}
+	const textMesh = mesh.parent?.parent
+		?.getChildMeshes()
+		.find(mesh => mesh.name === 'text');
+	if (!textMesh) {
+		return;
+	}
+
+	create3dText(btnName, mesh.getScene(), 0.3).then(newTextMesh => {
+		if (newTextMesh) {
+			newTextMesh.parent = textMesh.parent;
+			newTextMesh.position = textMesh.position;
+			newTextMesh.rotation = textMesh.rotation;
+			newTextMesh.scaling = textMesh.scaling;
+			newTextMesh.metadata = { ...textMesh.metadata };
+			textMesh.dispose();
+		}
+	});
 }
