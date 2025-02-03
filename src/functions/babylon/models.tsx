@@ -40,7 +40,6 @@ export interface MeshMetadataI {
 	mainParent?: Node | AbstractMesh | Mesh;
 	mainParentName?: string;
 	cycleAnimation?: Animatable;
-	realVisibility?: number;
 	startingVisibility?: number;
 	linkName?: string;
 	linkGroupName?: string;
@@ -91,8 +90,9 @@ export const changeMeshVisibility = (
 
 	(node.metadata as MeshMetadataI) = {
 		...node.metadata,
-		realVisibility: saveVisibility ? undefined : node.metadata.visibility,
-		visibility: visibility
+		visibility: saveVisibility
+			? visibility
+			: (node.metadata.visibility ?? node.metadata?.startingVisibility ?? 0)
 	};
 
 	if (node instanceof AbstractMesh || node instanceof Mesh) {
@@ -991,14 +991,8 @@ export function hideTooltip(
 			tooltip.methods?.hide?.();
 			const model = loadedNodes[tooltip.linkName]?.node;
 
-			if (model && model.metadata.realVisibility !== undefined) {
-				changeMeshVisibility(
-					model,
-					model.metadata.realVisibility,
-					false,
-					300,
-					true
-				);
+			if (model && model.metadata.visibility !== undefined) {
+				changeMeshVisibility(model, model.metadata.visibility, false, 300, true);
 			}
 		}
 	}
