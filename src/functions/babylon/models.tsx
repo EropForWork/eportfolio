@@ -265,10 +265,10 @@ export async function createScene(
 	const sceneMetadata: SceneMetadataI = {};
 	scene.metadata = sceneMetadata;
 	if (scene.isReady()) {
-		scene.debugLayer.show({
-			handleResize: false,
-			overlay: true
-		});
+		// scene.debugLayer.show({
+		// 	handleResize: false,
+		// 	overlay: true
+		// });
 		setBabylonProjectStates(prevState => ({
 			...prevState,
 			scene: scene
