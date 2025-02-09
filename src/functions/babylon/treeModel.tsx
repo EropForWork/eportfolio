@@ -7,6 +7,7 @@ import {
 	LinesMesh,
 	Mesh,
 	MeshBuilder,
+	PBRBaseMaterial,
 	Scene,
 	StandardMaterial,
 	Tools,
@@ -107,7 +108,7 @@ export function buildCommitTree(
 			.find(mesh => mesh.name === 'Plane');
 		if (planeText) {
 			planeText.dispose();
-			create3dText('commit', scene, 0.3).then(mesh => {
+			create3dText('commit', scene, 0.3, toColor3(lineColor)).then(mesh => {
 				if (!mesh) {
 					return;
 				}
@@ -129,6 +130,8 @@ export function buildCommitTree(
 			.getChildMeshes()
 			.find(mesh => mesh.name === 'Cylinder');
 		if (button) {
+			(button.material as PBRBaseMaterial)._albedoColor = toColor3(lineColor);
+
 			button.actionManager = new ActionManager(scene);
 			button.actionManager.registerAction(
 				new ExecuteCodeAction(ActionManager.OnPointerOverTrigger, () => {
@@ -159,6 +162,11 @@ export function buildCommitTree(
 					}
 				})
 			);
+		}
+		const backgroundRect = gitButtons.getChildMeshes()[2];
+		if (backgroundRect) {
+			(backgroundRect.material as PBRBaseMaterial)._albedoColor =
+				toColor3(bgColor);
 		}
 	}
 
@@ -322,19 +330,25 @@ function changeGitBtnText(mesh: AbstractMesh, newtext: string = '') {
 	if (!textMesh) {
 		return;
 	}
+	const rootStyles = getComputedStyle(document.documentElement);
+	const lineColor3: Color3 = toColor3(
+		rootStyles.getPropertyValue('--button-text') || 'rgba(0, 0, 0, 1)'
+	);
 
-	create3dText(newtext || btnName, mesh.getScene(), 0.3).then(newTextMesh => {
-		if (newTextMesh) {
-			newTextMesh.parent = textMesh.parent;
-			newTextMesh.position = textMesh.position;
-			newTextMesh.position.y = btnName === 'merge' ? 0.235 : 0.33;
-			newTextMesh.rotation = textMesh.rotation;
-			newTextMesh.scaling = textMesh.scaling;
-			newTextMesh.visibility = mesh.metadata.visibility;
-			newTextMesh.metadata = { ...textMesh.metadata };
-			textMesh.dispose();
+	create3dText(newtext || btnName, mesh.getScene(), 0.3, lineColor3).then(
+		newTextMesh => {
+			if (newTextMesh) {
+				newTextMesh.parent = textMesh.parent;
+				newTextMesh.position = textMesh.position;
+				newTextMesh.position.y = btnName === 'merge' ? 0.235 : 0.33;
+				newTextMesh.rotation = textMesh.rotation;
+				newTextMesh.scaling = textMesh.scaling;
+				newTextMesh.visibility = mesh.metadata.visibility;
+				newTextMesh.metadata = { ...textMesh.metadata };
+				textMesh.dispose();
+			}
 		}
-	});
+	);
 }
 
 export function changeGitGraphsColor(
