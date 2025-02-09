@@ -2,6 +2,7 @@ import { changeVectorModelsColor } from '../graphicsModel';
 import { changeGitGraphsColor } from '../treeModel';
 import { useSkillsContext } from '../../app/SkillsContext';
 import './ResumeButtons.css';
+import { changeTextureText } from '../programmingBoard/ProgrammingBoard';
 
 const ResumeButtons = () => {
 	const { graphicModelsNames, loadedNodes, gitGraphValues } = useSkillsContext();
@@ -27,6 +28,15 @@ const ResumeButtons = () => {
 
 		document.documentElement.setAttribute('data-theme', newTheme);
 		localStorage.setItem('theme', newTheme);
+		const skillContainer: HTMLDivElement = document.querySelector(
+			'.skill-group-container'
+		) as HTMLDivElement;
+		if (skillContainer) {
+			skillContainer.style.backgroundColor = '';
+		}
+		const rootStyles = getComputedStyle(document.documentElement);
+		const bgColor = rootStyles.getPropertyValue('--button-bg') || '#FFFFFF';
+		changeTextureText(bgColor);
 		changeVectorModelsColor(graphicModelsNames, loadedNodes);
 		changeGitGraphsColor(gitGraphValues, loadedNodes);
 	};

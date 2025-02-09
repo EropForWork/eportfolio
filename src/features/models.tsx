@@ -34,6 +34,7 @@ import {
 import { CameraPropsI, createCamera } from './camera';
 import { createGraphicModels } from '../entities/graphicsModel';
 import { buildCommitTree } from '../entities/treeModel';
+import { loadComputerMesh } from '../entities/programmingBoard/ProgrammingBoard';
 
 export interface MeshMetadataI {
 	visibility: number;
@@ -157,6 +158,7 @@ export const loadModels = async (
 					startingModel.modelName,
 					scene
 				);
+
 				const mainMesh = model.meshes[0];
 				mainMesh.name = startingModel.linkName;
 				mainMesh.rotation = new Vector3(0, 0, 0);
@@ -197,6 +199,9 @@ export const loadModels = async (
 						walkRobotAnimation.start(true, 1, 60, 120);
 						walkRobotAnimation.weight = 1;
 					}
+				}
+				if (startingModel.modelName === 'computer.gltf') {
+					loadComputerMesh(mainMesh);
 				}
 
 				return mainMesh;

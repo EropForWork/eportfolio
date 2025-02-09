@@ -46,6 +46,7 @@ import { changeMeshVisibility, ModelGroupsI } from '../features/models';
 import { CameraPropsI, moveCamera } from '../features/camera';
 import { drawnLines, drowedPoints } from '../entities/graphicsModel';
 import { changeGitBtnClicks } from '../entities/treeModel';
+import { changeTextureText } from '../entities/programmingBoard/ProgrammingBoard';
 
 export interface loadingModelProps {
 	modelName: string;
@@ -445,6 +446,20 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				rotation: new Vector3(0, Tools.ToRadians(270), 0),
 				scaling: new Vector3(0.3, 0.3, -0.3),
 				visibility: 1
+			},
+			{
+				modelName: 'computer.gltf',
+				linkName: 'computer',
+				position: new Vector3(-0.1, 2.5, -0.3),
+				rotation: new Vector3(0, Tools.ToRadians(65), 0),
+				scaling: new Vector3(4, 4, -4),
+				visibility: 1,
+				cameraProps: {
+					target: new Vector3(-0.2, 2.7, 0),
+					alpha: Tools.ToRadians(205),
+					beta: Tools.ToRadians(90),
+					radius: 4
+				}
 			}
 		],
 		[]
@@ -458,7 +473,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 			},
 			versionControl: { linkNames: ['commitModel'], models: [] },
 			programmingTools: {
-				linkNames: ['vscode', 'sublime'],
+				linkNames: ['computer'],
 				models: []
 			},
 			graphicTools: {
@@ -500,7 +515,7 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 						name: 'Visual Studio Code',
 						icon: <FaLaptopCode />,
 						level: 95,
-						linkName: 'vscode'
+						linkName: 'computer'
 					},
 					{ name: 'Sublime Text', icon: <FaLaptopCode />, level: 95 }
 				],
@@ -683,6 +698,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				});
 			}
 
+			const skillContainer: HTMLDivElement = document.querySelector(
+				'.skill-group-container'
+			) as HTMLDivElement;
+			if (skillContainer) {
+				skillContainer.style.backgroundColor = '';
+			}
+			changeTextureText(bgColor);
+
 			setSelectedSkill('');
 		}
 	}, [selectedSkill, babylonProjectStates]);
@@ -806,6 +829,14 @@ export const SkillsProvider: React.FC<SkillsProviderProps> = ({ children }) => {
 				beta: cameraProps.beta,
 				radius: cameraProps.radius
 			});
+
+			const skillContainer: HTMLDivElement = document.querySelector(
+				'.skill-group-container'
+			) as HTMLDivElement;
+			if (skillContainer) {
+				skillContainer.style.backgroundColor = '';
+			}
+			changeTextureText(bgColor);
 
 			setSelectedProgramm('');
 		}
