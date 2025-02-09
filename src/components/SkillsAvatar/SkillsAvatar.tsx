@@ -48,6 +48,7 @@ function SkillsAvatar() {
 				setOveredMesh
 			);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [overedMesh]);
 
 	const createBabylonjsActions: Record<string, () => void> = {
@@ -93,8 +94,7 @@ function SkillsAvatar() {
 				modelGroups,
 				removeNode
 			),
-		processed: () =>
-			light && models && createShadows(light, models, setBabylonProjectStates),
+		processed: () => light && models && createShadows(setBabylonProjectStates),
 		ready: () => {
 			if (engine && scene) {
 				startRenderScene(babylonProjectStates, setBabylonProjectStates);
@@ -105,6 +105,7 @@ function SkillsAvatar() {
 
 	useEffect(() => {
 		createBabylonjsActions[state]?.();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state]);
 
 	return (

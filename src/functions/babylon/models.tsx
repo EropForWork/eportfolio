@@ -641,8 +641,8 @@ function createMeshTooltips(
 }
 
 export function createShadows(
-	light: DirectionalLight,
-	models: (Mesh | AbstractMesh)[],
+	// light: DirectionalLight,
+	// models: (Mesh | AbstractMesh)[],
 	setBabylonProjectStates: React.Dispatch<
 		React.SetStateAction<babylonProjectStatesI>
 	>
