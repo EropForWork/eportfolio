@@ -1,6 +1,6 @@
 import ResumeButtons from '../ResumeButtons/ResumeButtons';
 import SkillsSection from '../SkillsSection/SkillsSection';
-import { SkillsProvider } from '../SkillsContext';
+import { SkillsProvider } from '../../app/SkillsContext';
 
 import './MainPage.css';
 const MainPage = () => {

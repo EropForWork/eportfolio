@@ -42,13 +42,10 @@ import {
 } from 'react-icons/si';
 import { MdBuild } from 'react-icons/md';
 import * as GUI from 'babylonjs-gui';
-import {
-	changeMeshVisibility,
-	ModelGroupsI
-} from '../functions/babylon/models';
-import { CameraPropsI, moveCamera } from '../functions/babylon/camera';
-import { drawnLines, drowedPoints } from '../functions/babylon/graphicsModel';
-import { changeGitBtnClicks } from '../functions/babylon/treeModel';
+import { changeMeshVisibility, ModelGroupsI } from '../features/models';
+import { CameraPropsI, moveCamera } from '../features/camera';
+import { drawnLines, drowedPoints } from '../entities/graphicsModel';
+import { changeGitBtnClicks } from '../entities/treeModel';
 
 export interface loadingModelProps {
 	modelName: string;

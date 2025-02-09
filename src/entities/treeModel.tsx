@@ -17,14 +17,14 @@ import {
 	GitGraphValueI,
 	GitGraphValuesType,
 	LoadedNodesType
-} from '../../components/SkillsContext';
+} from '../app/SkillsContext';
 import {
 	addMeshMetadata,
 	animateMeshProperty,
 	changeMeshVisibility,
 	ModelGroupsI,
 	toColor3
-} from './models';
+} from '../features/models';
 import earcut from 'earcut';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 (window as any).earcut = earcut;

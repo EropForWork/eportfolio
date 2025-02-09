@@ -15,11 +15,8 @@ import {
 	changeMeshVisibility,
 	ModelGroupsI,
 	toColor3
-} from './models';
-import {
-	GraphicsModelsT,
-	LoadedNodesType
-} from '../../components/SkillsContext';
+} from '../features/models';
+import { GraphicsModelsT, LoadedNodesType } from '../app/SkillsContext';
 
 interface drowedPointI {
 	x: number;

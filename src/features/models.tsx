@@ -30,10 +30,10 @@ import {
 	loadingModelProps,
 	meshStartingProps,
 	MeshTooltip
-} from '../../components/SkillsContext';
+} from '../app/SkillsContext';
 import { CameraPropsI, createCamera } from './camera';
-import { createGraphicModels } from './graphicsModel';
-import { buildCommitTree } from './treeModel';
+import { createGraphicModels } from '../entities/graphicsModel';
+import { buildCommitTree } from '../entities/treeModel';
 
 export interface MeshMetadataI {
 	visibility: number;

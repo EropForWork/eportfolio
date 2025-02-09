@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
-import { useSkillsContext } from '../SkillsContext';
+import { useSkillsContext } from '../../app/SkillsContext';
 import 'babylonjs-loaders';
 import './SkillsAvatar.css';
 import {
@@ -11,7 +11,7 @@ import {
 	processingUserModels,
 	startRenderScene,
 	triggerMouseMeshLogic
-} from '../../functions/babylon/models';
+} from '../../features/models';
 
 function SkillsAvatar() {
 	const [hasInitialized, setHasInitialized] = useState(false);

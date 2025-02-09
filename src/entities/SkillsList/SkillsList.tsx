@@ -1,8 +1,8 @@
 import './SkillsList.css';
-import { useSkillsContext } from '../SkillsContext';
+import { useSkillsContext } from '../../app/SkillsContext';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import { hideTooltip, revialTooltip } from '../../functions/babylon/models';
+import { hideTooltip, revialTooltip } from '../../features/models';
 import SimpleBar from 'simplebar-react';
 
 const SkillsList = () => {
@@ -104,10 +104,7 @@ const SkillsList = () => {
 					<h2 className="skills-title">Софт скилы</h2>
 					<ul className="skills-list">
 						{softSkills.map((skill, index) => (
-							<li
-								key={index}
-								className="skill-group-container soft-skill"
-							>
+							<li key={index} className="skill-group-container soft-skill">
 								{skill}
 							</li>
 						))}

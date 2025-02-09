@@ -1,6 +1,6 @@
-import { changeVectorModelsColor } from '../../functions/babylon/graphicsModel';
-import { changeGitGraphsColor } from '../../functions/babylon/treeModel';
-import { useSkillsContext } from '../SkillsContext';
+import { changeVectorModelsColor } from '../graphicsModel';
+import { changeGitGraphsColor } from '../treeModel';
+import { useSkillsContext } from '../../app/SkillsContext';
 import './ResumeButtons.css';
 
 const ResumeButtons = () => {
